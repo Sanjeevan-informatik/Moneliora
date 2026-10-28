@@ -15,3 +15,10 @@
 .chart-shell svg{width:100%;height:auto;display:block;min-height:150px}
 .chart-footer{display:flex;justify-content:space-between;gap:12px;font-size:11px;color:#738892;padding:5px 9px}
 @media(max-width:760px){.live-market-panel .filterbar{display:grid;grid-template-columns:1fr}.period-group{justify-content:start}.quote-summary{align-items:start}}
+
+/* Public educational preview: intentionally hide personal-data and billing UI. */
+.preview-banner{position:sticky;top:0;z-index:20;background:#fef3d0;color:#674300;font-size:13px;font-weight:700;text-align:center;padding:13px 18px;border-bottom:1px solid #e9c66f}
+.public-preview #account,.public-preview #consult,.public-preview #live-market,
+.public-preview a[data-nav="account"],.public-preview a[data-nav="consult"],
+.public-preview a[data-nav="live-market"]{display:none!important}
+.public-preview .topline-right{display:none}
