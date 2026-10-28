@@ -9,6 +9,25 @@ const companies=[
 ];
 const eur=n=>new Intl.NumberFormat("de-DE",{style:"currency",currency:"EUR"}).format(n);
 let cash=5000;const positions={};
+const STORAGE_KEY="moneliora-paper-v2";const WATCH_KEY="moneliora-watch-v1";
+let watched=[];
+try{
+ const s=JSON.parse(localStorage.getItem(STORAGE_KEY)||"null");
+ if(s&&Number.isFinite(s.cash)&&s.cash>=0&&s.cash<=5000&&s.positions&&typeof s.positions==="object"){
+  let total=s.cash;let valid=true;
+  for(const company of companies){const q=s.positions[company.symbol]??0;if(!Number.isSafeInteger(q)||q<0||q>100000){valid=false;break}total+=q*company.price;}
+  if(valid&&total<=10000000){cash=s.cash;for(const company of companies){const q=s.positions[company.symbol]||0;if(q)positions[company.symbol]=q;}}
+ }
+ const w=JSON.parse(localStorage.getItem(WATCH_KEY)||"[]");if(Array.isArray(w))watched=[...new Set(w.filter(symbol=>companies.some(x=>x.symbol===symbol)))].slice(0,9);
+}catch(_){}
+function persist(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({cash,positions}));}catch(_){}}
+function renderWatch(){const root=$("watchItems");root.replaceChildren();for(const symbol of watched){
+const c=companies.find(x=>x.symbol===symbol),line=document.createElement("div");line.className="holding";
+const name=document.createElement("span");name.textContent=c.name+" ("+c.symbol+") · fictional "+eur(c.price);
+const btn=document.createElement("button");btn.className="ghost";btn.textContent="Remove";btn.addEventListener("click",()=>{watched=watched.filter(x=>x!==symbol);try{localStorage.setItem(WATCH_KEY,JSON.stringify(watched))}catch(_){}renderWatch()});line.append(name,btn);root.append(line)}
+if(!watched.length){const p=document.createElement("p");p.className="muted";p.textContent="Your watchlist is empty.";root.append(p)}}
+function risk(){const amount=number("riskAmount",0,10000000),drop=number("riskDrop",0,100);if(amount===null||drop===null){$("riskValue").textContent="Invalid values";$("riskLoss").textContent="";return}const loss=amount*drop/100;$("riskValue").textContent=eur(amount-loss);$("riskLoss").textContent="Hypothetical loss: "+eur(loss)+" · Not a forecast.";}
+
 const $=id=>document.getElementById(id);
 function number(id,min,max){const n=Number($(id).value);return Number.isFinite(n)&&n>=min&&n<=max?n:null}
 function update(){
@@ -22,7 +41,7 @@ function update(){
   line.append(left,right);root.append(line);}
  if(!root.children.length){const p=document.createElement("p");p.className="muted";p.textContent="No holdings yet. Try a simulated trade.";root.append(p)}
  $("cashValue").textContent=eur(cash);$("portfolioValue").textContent=eur(cash+held);
- $("plValue").textContent=eur(cash+held-5000);
+ $("plValue").textContent=eur(cash+held-5000);persist();
 }
 function trade(side){
  const qty=number("tradeQty",1,100000);const c=companies.find(x=>x.symbol===$("tradeSymbol").value);
@@ -54,7 +73,7 @@ for(const c of companies){
  const price=document.createElement("strong");price.textContent=eur(c.price);
  const note=document.createElement("p");note.textContent="Fictional teaching price · EUR";
  card.append(ticker,title,price,note);$("markets").append(card);
- const opt=document.createElement("option");opt.value=c.symbol;opt.textContent=c.name+" ("+c.symbol+")";$("tradeSymbol").append(opt);
+ const opt=document.createElement("option");opt.value=c.symbol;opt.textContent=c.name+" ("+c.symbol+")";$("tradeSymbol").append(opt);$("watchSymbol").append(opt.cloneNode(true));
 }
 function estimate(){const c=companies.find(x=>x.symbol===$("tradeSymbol").value),qty=number("tradeQty",1,100000);
  $("tradeEstimate").textContent=c&&qty?("Illustrative total: "+eur(c.price*qty)):"Enter valid quantity";}
@@ -74,4 +93,6 @@ $("consultForm").addEventListener("submit",async event=>{
  $("consultStatus").textContent="Request recorded. Appointment not yet confirmed.";form.reset();
  }catch(err){$("consultStatus").textContent=err.message||"Network error"}finally{submit.disabled=false}
 });
-update();calculate();fees();estimate();
+$("watchAdd").addEventListener("click",()=>{const symbol=$("watchSymbol").value;if(!watched.includes(symbol)){watched.push(symbol);try{localStorage.setItem(WATCH_KEY,JSON.stringify(watched))}catch(_){}renderWatch()}});
+["riskAmount","riskDrop"].forEach(id=>$(id).addEventListener("input",risk));
+update();calculate();fees();estimate();renderWatch();risk();
