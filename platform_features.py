@@ -72,11 +72,23 @@ def db_conn():
            stripe_customer_id TEXT, status TEXT NOT NULL,
            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
         );
+        CREATE TABLE IF NOT EXISTS paypal_subscriptions(
+          user_id INTEGER PRIMARY KEY, subscription_id TEXT UNIQUE, intent_id TEXT NOT NULL,
+          tier TEXT NOT NULL, plan_id TEXT NOT NULL, status TEXT NOT NULL,
+          created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+          FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+        CREATE TABLE IF NOT EXISTS paypal_events(event_id TEXT PRIMARY KEY, processed_at TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS stripe_events(
            event_id TEXT PRIMARY KEY, processed_at TEXT NOT NULL
         );
     """)
     return db
+
+def recompute_membership(db, user_id: int) -> None:
+    paypal = db.execute("SELECT tier FROM paypal_subscriptions WHERE user_id=? AND status='ACTIVE'", (user_id,)).fetchone()
+    stripe = db.execute("SELECT 1 FROM stripe_subscriptions WHERE user_id=? AND status IN ('active','trialing') LIMIT 1",(user_id,)).fetchone()
+    db.execute("UPDATE users SET plan=? WHERE id=?", (paypal["tier"] if paypal else ("premium" if stripe else "free"),user_id))
 
 def utc_now():
     return datetime.now(timezone.utc)
