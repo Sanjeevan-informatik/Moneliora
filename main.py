@@ -12,7 +12,8 @@ import time
 from fastapi import FastAPI, Header, HTTPException, Request
 from platform_features import router as platform_router
 from market_data import router as market_router
-from fastapi.responses import FileResponse, JSONResponse
+from paypal_billing import router as paypal_router
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
@@ -20,10 +21,12 @@ ROOT = Path(__file__).resolve().parent
 DB = Path(os.getenv("MONELIORA_DB", str(ROOT / "data" / "moneliora.db")))
 ADMIN_TOKEN = os.getenv("MONELIORA_ADMIN_TOKEN", "")
 ALLOWED_ORIGIN = os.getenv("MONELIORA_ORIGIN", "http://127.0.0.1:8000").rstrip("/")
+PUBLIC_PREVIEW = os.getenv("MONELIORA_PUBLIC_PREVIEW", "false").strip().lower() == "true"
 app = FastAPI(title="Moneliora", docs_url=None, redoc_url=None, openapi_url=None)
 app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
 app.include_router(platform_router)
 app.include_router(market_router)
+app.include_router(paypal_router)
 rate_lock = threading.Lock()
 requests_by_client: dict[str, list[float]] = {}
 CSP = ("default-src 'none'; script-src 'self'; style-src 'self'; "
@@ -78,10 +81,21 @@ SECURITY_HEADERS = {
 
 @app.middleware("http")
 async def security_headers(request: Request, call_next):
+    # Fail closed for all stateful and provider APIs when a public demo is deployed.
+    # Use /api/health for unauthenticated uptime checks only.
+    if PUBLIC_PREVIEW and request.url.path.startswith("/api/") and request.url.path != "/api/health":
+        response = JSONResponse(
+            {"detail": "Customer accounts, billing and market feeds are disabled in this public demo."},
+            status_code=403,
+        )
+        response.headers.update(SECURITY_HEADERS)
+        if request.url.scheme == "https":
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        return response
     # Also apply headers on rejected requests, not only successful responses.
     rejection = None
     if request.method in ("POST", "PUT", "PATCH", "DELETE"):
-        if request.url.path == "/api/billing/webhook":
+        if request.url.path in ("/api/billing/webhook", "/api/paypal/webhook"):
             response = await call_next(request)
             response.headers.update(SECURITY_HEADERS)
             return response
@@ -109,11 +123,26 @@ async def security_headers(request: Request, call_next):
 
 @app.get("/")
 def home():
+    if PUBLIC_PREVIEW:
+        # Keep simulated investing tools interactive, but remove UI for private
+        # customer details and billing. No customer APIs are available in preview.
+        page = (ROOT / "static" / "index.html").read_text(encoding="utf-8")
+        for script in ("account.js", "paypal.js", "market.js"):
+            page = page.replace(f'<script src="/static/{script}" defer></script>', "")
+        page = page.replace(
+            "<body>",
+            '<body class="public-preview">'
+            '<div class="preview-banner" role="status">'
+            "PUBLIC EDUCATIONAL PREVIEW — simulated money and fictional stock prices only. "
+            "Accounts, contact forms, payments and live data are disabled.</div>",
+            1,
+        )
+        return HTMLResponse(page)
     return FileResponse(ROOT / "static" / "index.html")
 
 @app.get("/api/health")
 def health():
-    return {"ok": True, "mode": "education-only", "live_trading": False}
+    return {"ok": True, "mode": "public-preview" if PUBLIC_PREVIEW else "education-only", "live_trading": False, "payments_enabled": False if PUBLIC_PREVIEW else None}
 
 @app.post("/api/consultations", status_code=201)
 def create_consultation(payload: Consultation, request: Request):

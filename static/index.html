@@ -10,6 +10,7 @@
   <script src="/static/app.js" defer></script>
   <script src="/static/account.js" defer></script>
   <script src="/static/market.js" defer></script>
+  <script src="/static/paypal.js" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to main content</a>
@@ -217,7 +218,14 @@
                 <label class="field">Question<input name="question" maxlength="500"></label><button class="button button-primary" type="submit">Request a session</button></form><div id="myBookings"></div>
             </div>
           </div>
-          <div class="button-row"><button id="premiumCheckout" class="button button-outline">See subscription checkout</button><span id="billingState" class="hint"></span></div>
+          <div class="card" id="paypalBillingPanel">
+          <span class="eyebrow">PAYPAL SUBSCRIPTIONS</span><h3>Choose your plan</h3>
+          <p class="hint">PayPal approval shows the merchant-set monthly price before you subscribe. Plans are unavailable until configured.</p>
+          <div class="button-row"><button id="paypalPremium" class="button button-outline" type="button">PayPal Premium</button><button id="paypalPro" class="button button-outline" type="button">PayPal Pro</button></div>
+          <p id="paypalStatus" role="status" class="form-feedback">Sign in to view PayPal billing.</p>
+          <div class="button-row"><button id="paypalVerify" class="button button-outline" type="button">Verify subscription</button><button id="paypalCancel" class="button button-danger" type="button">Cancel PayPal subscription</button></div>
+          </div>
+          <div class="button-row"><button id="premiumCheckout" class="button button-outline">See Stripe subscription checkout</button><span id="billingState" class="hint"></span></div>
           <div id="adminPanel" hidden><h3>Booking administration</h3><div id="adminBookings"></div></div>
         </div>
         <p id="accountFeedback" role="status" class="form-feedback"></p>

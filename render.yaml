@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: moneliora-preview
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: MONELIORA_PUBLIC_PREVIEW
+        value: "true"
+      - key: MONELIORA_PAYPAL_MODE
+        value: sandbox
+      - key: MONELIORA_SECURE_COOKIES
+        value: "true"
+      - key: PYTHON_VERSION
+        value: "3.12.7"
