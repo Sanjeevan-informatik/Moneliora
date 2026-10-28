@@ -15,6 +15,7 @@
 <div class="notice"><b>Learning mode.</b> All stock prices below are fictional educational examples. No exchange connection, real-time quotes, deposits or actual securities orders.</div></section>
 <section id="explore"><div class="section-head"><div><p class="eyebrow">DISCOVER</p><h2>Explore companies</h2></div><p>Sample prices in EUR · not market data</p></div>
 <div id="markets" class="market-grid"></div></section>
+<section id="watchlist"><div class="section-head"><div><p class="eyebrow">TRACK</p><h2>My watchlist</h2></div><p>Saved only on this device</p></div><div class="panel"><label>Choose company<select id="watchSymbol"></select></label><button class="secondary" id="watchAdd">Add to watchlist</button><div id="watchItems" class="holdings"></div></div></section>
 <section id="portfolio"><div class="section-head"><div><p class="eyebrow">PRACTISE</p><h2>Your paper portfolio</h2></div><button id="resetPortfolio" class="ghost">Reset sandbox</button></div>
 <div class="twocol"><div class="panel"><h3>Simulate a trade</h3><label>Company<select id="tradeSymbol"></select></label><label>Shares<input id="tradeQty" type="number" min="1" max="100000" step="1" value="1"></label><p class="muted" id="tradeEstimate"></p><div class="row"><button id="buy" class="primary">Virtual buy</button><button id="sell" class="secondary">Virtual sell</button></div><p id="tradeNotice" role="status" class="feedback"></p></div>
 <div class="panel"><h3>Current holdings</h3><div id="holdings" class="holdings"></div></div></div></section>
@@ -28,6 +29,7 @@
 <label>Order fee (€)<input id="orderFee" type="number" min="0" step=".01" value="1"></label>
 <label>Spread estimate (%)<input id="spread" type="number" min="0" max="100" step=".01" value=".2"></label>
 <div class="output"><small>Estimated transaction cost</small><strong id="feeResult"></strong><span id="feeDetail"></span></div><p class="muted">Model excludes taxes, FX costs, custody charges and other broker-specific fees. Fees are user supplied.</p></div></div></section>
+<section id="risk"><div class="section-head"><div><p class="eyebrow">UNDERSTAND DOWNSIDE</p><h2>Loss scenario calculator</h2></div></div><div class="panel"><label>Investment amount (€)<input id="riskAmount" type="number" min="0" max="10000000" value="500"></label><label>Hypothetical market decline (%)<input id="riskDrop" type="number" min="0" max="100" value="30"></label><div class="output"><small>Illustrative value after decline</small><strong id="riskValue"></strong><span id="riskLoss"></span></div></div></section>
 <section id="consult"><div class="section-head"><div><p class="eyebrow">GET SUPPORT</p><h2>Request an educational session</h2></div></div>
 <div class="twocol"><div class="panel"><h3>Topics we can cover</h3><p>Understanding market orders, ETFs versus stocks, platform navigation, fees and portfolio risks.</p>
 <p class="muted">No personalised buy/sell recommendations or regulated financial advice.</p></div>
