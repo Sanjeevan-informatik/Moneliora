@@ -1,4 +1,6 @@
 """Market integration tests use synthetic provider data; no API credentials or live requests."""
+import os
+os.environ.setdefault("MONELIORA_ADMIN_TOKEN", "a" * 64)
 from fastapi.testclient import TestClient
 import market_data as m
 from main import app
