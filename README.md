@@ -59,3 +59,23 @@ pytest -q
 ```
 
 Only publish after a full code review, environment-specific testing, independent security assessment and legal review.
+
+## New account and booking prototype (feature/accounts-bookings-integrations)
+- Email/password accounts with Argon2 hashes, HttpOnly session cookies, CSRF protection, account lockout and optional TOTP authenticator MFA.
+- Account-isolated demo portfolio snapshots, saved watchlists and recent paper trades.
+- Logged-in educational booking requests and self-service cancellation; admin approval interface (admin role must be assigned by a trusted operator, never through a public form).
+- Optional Twelve Data daily-history endpoint, currently limited to NVDA, MSFT, AAPL and TSLA in the provider's native USD units. It is not live and not connected to paper-trading demo prices.
+- Optional Stripe hosted subscription checkout with signed, idempotent webhook processing. Both providers require your own credentials and deployment settings.
+
+Add optional values in the hosting environment, **never commit credentials**:
+```text
+MONELIORA_TWELVE_DATA_KEY=
+MONELIORA_STRIPE_SECRET_KEY=
+MONELIORA_STRIPE_PRICE_ID=
+MONELIORA_STRIPE_WEBHOOK_SECRET=
+MONELIORA_PUBLIC_URL=https://your-domain.example
+MONELIORA_SECURE_COOKIES=true
+MONELIORA_ORIGIN=https://your-domain.example
+```
+
+**Before launch:** Enable HTTPS/TLS termination; configure managed database encryption, backups, email verification and password reset, safe MFA recovery, rate limiting shared across workers, anti-bot protection, email delivery, consent/privacy workflows, retention jobs, request-body enforcement at the proxy, observability, provider licensing, Stripe customer portal and financial/legal review. Stripe subscription handling is an integration scaffold, not a complete billing ledger; verify asynchronous payment handling, entitlement reconciliation and failed-payment behavior. The demo uses local SQLite and should not be entrusted with real customer data. Real orders and personalised investment advice remain disabled. Test using synthetic details only.
