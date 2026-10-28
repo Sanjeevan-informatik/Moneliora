@@ -117,3 +117,11 @@ A safe demo deployment blueprint is provided in `render.yaml`. It sets `MONELIOR
 Connect the GitHub repository to a hosting provider, select the `feature/public-preview-deployment` branch and deploy using the Render Blueprint (or manually configure equivalent Python runtime, build and start commands). The branch must be merged before auto-deployment from `main`. Set `MONELIORA_PUBLIC_PREVIEW=true` at the host; never upload payment or stock API keys to the preview environment. HTTPS is required for public serving. Render free-tier storage is ephemeral; the public demo intentionally does not persist server-side customer data.
 
 **Do not turn off preview mode in production yet.** Real subscriptions, user registration and personal details require an external security review, verified merchant accounts, database migrations, encrypted backups, legal notices, webhook replay testing, reconciled entitlements, account recovery and a production deployment review.
+
+
+## Market-linked virtual portfolio
+This feature is **optional** and separate from the fictional teaching account. With a licensed Twelve Data key set as `MONELIORA_TWELVE_DATA_KEY`, the site requests `GET /api/quotes/snapshot` every 75 seconds while visible. The endpoint retrieves AAPL, MSFT, NVDA and TSLA in USD, fetches USD/EUR, returns converted EUR estimates, timestamps and a delay warning. Quotes and FX can have different timestamps; neither is guaranteed real-time.
+
+The **Market-linked portfolio** uses a separate €5,000 virtual budget saved in the browser and marks holdings to the latest provider snapshot. No real orders are placed. When any required quote or FX fails, its trading controls are disabled rather than silently showing fictional replacements. Other example companies remain in the original fictional teaching simulator.
+
+In `MONELIORA_PUBLIC_PREVIEW=true`, only read-only `/api/quotes/status` and `/api/quotes/snapshot` are exposed, alongside the health endpoint. Personal data, billing, account and trade APIs remain blocked. The API key must be stored only on the server. **Confirm commercial display and redistribution permissions before exposing provider data on a public site.**
