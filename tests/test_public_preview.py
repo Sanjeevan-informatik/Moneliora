@@ -1,11 +1,11 @@
-import os
-os.environ["MONELIORA_PUBLIC_PREVIEW"] = "true"
+import main
 from fastapi.testclient import TestClient
 from main import app
 
 client = TestClient(app)
 
-def test_public_demo_is_nontransactional():
+def test_public_demo_is_nontransactional(monkeypatch):
+    monkeypatch.setattr(main, "PUBLIC_PREVIEW", True)
     r = client.get("/")
     assert r.status_code == 200
     assert "PUBLIC EDUCATIONAL PREVIEW" in r.text
