@@ -8,9 +8,11 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException
 from market_data import (
-    API_KEY, SYMBOLS, QUOTE_TTL, _cached, _provider_call, _valid_price,
+    SYMBOLS, QUOTE_TTL, _cached, _provider_call, _valid_price,
     _as_of, latest,
 )
+
+import market_data as provider
 
 router = APIRouter(prefix="/api/quotes", tags=["market data"])
 SUPPORTED = tuple(SYMBOLS)
@@ -18,7 +20,7 @@ FX_PAIR = "USD/EUR"
 
 
 def fx_quote():
-    if not API_KEY:
+    if not provider.API_KEY:
         raise HTTPException(503, "Market data not configured.")
 
     def fetch():
