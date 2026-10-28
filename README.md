@@ -79,3 +79,20 @@ MONELIORA_ORIGIN=https://your-domain.example
 ```
 
 **Before launch:** Enable HTTPS/TLS termination; configure managed database encryption, backups, email verification and password reset, safe MFA recovery, rate limiting shared across workers, anti-bot protection, email delivery, consent/privacy workflows, retention jobs, request-body enforcement at the proxy, observability, provider licensing, Stripe customer portal and financial/legal review. Stripe subscription handling is an integration scaffold, not a complete billing ledger; verify asynchronous payment handling, entitlement reconciliation and failed-payment behavior. The demo uses local SQLite and should not be entrusted with real customer data. Real orders and personalised investment advice remain disabled. Test using synthetic details only.
+
+
+## Quotes and charts (feature/market-quotes-charts)
+
+The **Market charts** page has latest-available quotes and 1D / 5D / 1M / 3M / 1Y close-price charts for AAPL, MSFT, NVDA, and TSLA.
+
+To enable the feature, set the server-side environment variable `MONELIORA_TWELVE_DATA_KEY` to an API key authorised for the selected market data. **Never put it in JavaScript, query strings visible to the browser, or GitHub secrets exposed to public workflows.** The server alone talks to Twelve Data. Without the key, users see an explicit unavailable state.
+
+- `GET /api/quotes/status`: available symbols, setup status and disclaimers.
+- `GET /api/quotes/latest/{symbol}`: latest provider quote (cached for 75 seconds).
+- `GET /api/quotes/chart/{symbol}?range=1M`: historical closing prices (cached according to timeframe).
+- The browser polls the quote every 75 seconds only while visible, and redraws the historical chart on selection changes.
+- Chart values use provider-native **USD**. The separate practice portfolio continues using **fictional EUR** example prices. Market feed never controls virtual buy/sell prices.
+- **Not guaranteed real-time:** exchange licensing, feed entitlements, provider-plan delay, exchange sessions, credit limits and quote timestamps determine actual freshness. The UI never fabricates prices when the provider is not configured.
+- For public commercial display, independently confirm Twelve Data's exchange-specific commercial display/redistribution rights, pricing and rate limits. A consumer API key alone may not permit redistribution to your web visitors.
+
+Run `node --check static/market.js` and `pytest -q` before merging.
