@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Moneliora — learn investing, compare costs and practise with virtual funds.">
+<title>Moneliora · Financial clarity</title><link rel="stylesheet" href="/static/styles.css"></head>
+<body><div class="shell"><aside class="sidebar"><div class="brand"><div class="mark">M</div> Moneliora</div>
+<div class="side-caption">YOUR WORKSPACE</div><nav aria-label="Main navigation">
+<a href="#overview">◫ &nbsp;Overview</a><a href="#explore">◎ &nbsp;Markets</a>
+<a href="#portfolio">◈ &nbsp;Paper portfolio</a><a href="#tools">▤ &nbsp;Calculators</a>
+<a href="#consult">◷ &nbsp;Consultation</a></nav>
+<div class="sidebar-note">EDUCATION SANDBOX<br><small>Not investment advice, a brokerage or a source of live prices.</small></div></aside>
+<main><header><div><p class="eyebrow">YOUR FINANCIAL LEARNING SPACE</p><h1>Invest with clarity<span class="accent">.</span></h1><p class="sub">Learn the fundamentals, compare costs and practise investing without real money.</p></div><span class="pill">● Virtual money only</span></header>
+<section id="overview"><div class="summary"><article class="stat"><small>Virtual portfolio</small><strong id="portfolioValue">€5,000.00</strong><span>Illustrative account value</span></article>
+<article class="stat"><small>Available virtual cash</small><strong id="cashValue">€5,000.00</strong><span>Starts with €5,000</span></article>
+<article class="stat"><small>Paper P/L</small><strong id="plValue">€0.00</strong><span>Not actual performance</span></article></div>
+<div class="notice"><b>Learning mode.</b> All stock prices below are fictional educational examples. No exchange connection, real-time quotes, deposits or actual securities orders.</div></section>
+<section id="explore"><div class="section-head"><div><p class="eyebrow">DISCOVER</p><h2>Explore companies</h2></div><p>Sample prices in EUR · not market data</p></div>
+<div id="markets" class="market-grid"></div></section>
+<section id="portfolio"><div class="section-head"><div><p class="eyebrow">PRACTISE</p><h2>Your paper portfolio</h2></div><button id="resetPortfolio" class="ghost">Reset sandbox</button></div>
+<div class="twocol"><div class="panel"><h3>Simulate a trade</h3><label>Company<select id="tradeSymbol"></select></label><label>Shares<input id="tradeQty" type="number" min="1" max="100000" step="1" value="1"></label><p class="muted" id="tradeEstimate"></p><div class="row"><button id="buy" class="primary">Virtual buy</button><button id="sell" class="secondary">Virtual sell</button></div><p id="tradeNotice" role="status" class="feedback"></p></div>
+<div class="panel"><h3>Current holdings</h3><div id="holdings" class="holdings"></div></div></div></section>
+<section id="tools"><div class="section-head"><div><p class="eyebrow">PLAN</p><h2>Financial tools</h2></div><p>Illustrative scenarios, not forecasts</p></div>
+<div class="twocol"><div class="panel"><h3>Investment growth simulator</h3><label>Initial investment (€)<input id="initial" type="number" min="0" max="10000000" value="500"></label>
+<label>Monthly contribution (€)<input id="monthly" type="number" min="0" max="100000" value="100"></label>
+<label>Annual hypothetical return (%)<input id="returnRate" type="number" min="-99" max="50" step=".5" value="5"></label>
+<label>Years<input id="years" type="number" min="1" max="60" value="10"></label>
+<div class="output"><small>Illustrative end value</small><strong id="growthResult"></strong><span id="growthDetail"></span></div></div>
+<div class="panel"><h3>Broker fee comparison</h3><label>Order value (€)<input id="orderValue" type="number" min="1" value="500"></label>
+<label>Order fee (€)<input id="orderFee" type="number" min="0" step=".01" value="1"></label>
+<label>Spread estimate (%)<input id="spread" type="number" min="0" max="100" step=".01" value=".2"></label>
+<div class="output"><small>Estimated transaction cost</small><strong id="feeResult"></strong><span id="feeDetail"></span></div><p class="muted">Model excludes taxes, FX costs, custody charges and other broker-specific fees. Fees are user supplied.</p></div></div></section>
+<section id="consult"><div class="section-head"><div><p class="eyebrow">GET SUPPORT</p><h2>Request an educational session</h2></div></div>
+<div class="twocol"><div class="panel"><h3>Topics we can cover</h3><p>Understanding market orders, ETFs versus stocks, platform navigation, fees and portfolio risks.</p>
+<p class="muted">No personalised buy/sell recommendations or regulated financial advice.</p></div>
+<form class="panel" id="consultForm"><h3>Consultation request</h3><label>Full name<input name="name" required minlength="2" maxlength="80"></label>
+<label>Email address<input name="email" type="email" required></label><label>Topic<input name="topic" required minlength="3" maxlength="80" value="Broker platform education"></label>
+<label>Preferred date<input name="preferred_date" id="preferredDate" type="date" required></label><label>Message<textarea name="message" maxlength="1200" rows="3" placeholder="What would you like to learn?"></textarea></label>
+<label class="check"><input name="privacy_accepted" type="checkbox" required><span>I consent to the use of these details to respond to my request. Records are automatically deleted after 90 days.</span></label><button class="primary" type="submit">Send request</button><p role="status" id="consultStatus" class="feedback"></p></form></div></section>
+<footer>© Moneliora · Educational prototype · No live securities trading. Before commercial launch: privacy notice, Impressum, qualified legal review and external security assessment required.</footer>
+</main></div><script src="/static/app.js" defer></script></body></html>
