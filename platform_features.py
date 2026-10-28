@@ -420,6 +420,10 @@ def billing_status(user:Annotated[dict,Depends(session_auth)]):
 def billing_checkout(user:Annotated[dict,Depends(csrf_guard)]):
     if not (STRIPE_SECRET and STRIPE_PRICE and STRIPE_WEBHOOK):
         raise HTTPException(503,"Subscriptions are not available yet.")
+    with db_conn() as db:
+        other = db.execute("SELECT 1 FROM paypal_subscriptions WHERE user_id=? AND status NOT IN ('CANCELLED','EXPIRED')",(user["id"],)).fetchone()
+        if other:
+            raise HTTPException(409,"Manage your existing PayPal subscription before using Stripe.")
     if not PUBLIC_URL.startswith("https://"):
         raise HTTPException(503,"HTTPS public URL required for billing.")
     try:
@@ -470,6 +474,17 @@ async def billing_webhook(request:Request,stripe_signature:Annotated[str | None,
             if row:
                 db.execute("UPDATE users SET plan=? WHERE id=?",
                            ("premium" if status in ("active","trialing") else "free",row["user_id"]))
+        # Reconcile entitlements across both providers; a Stripe cancellation
+        # must never override an active PayPal membership.
+        affected = None
+        if event_type == "checkout.session.completed" and obj.get("payment_status") == "paid":
+            customer_ref = obj.get("client_reference_id")
+            if customer_ref and str(customer_ref).isdigit():
+                affected = int(customer_ref)
+        elif event_type in ("customer.subscription.deleted","customer.subscription.updated") and row:
+            affected = row["user_id"]
+        if affected is not None:
+            recompute_membership(db, affected)
         db.execute("INSERT INTO stripe_events(event_id,processed_at) VALUES(?,?)",(event["id"],now_iso()))
         db.commit()
     return {"received":True}
