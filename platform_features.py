@@ -18,7 +18,7 @@ import time
 import pyotp
 from argon2 import PasswordHasher, exceptions as argon_exc
 from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Request, Response
-from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
+from pydantic import BaseModel, EmailStr, Field, Query, field_validator, model_validator
 
 router = APIRouter()
 DB = Path(os.getenv("MONELIORA_DB", str(Path(__file__).resolve().parent / "data" / "moneliora.db")))
@@ -365,7 +365,7 @@ def market_status():
             "note":"Daily historical data only when licensed API key is configured. Demo prices are separate."}
 
 @router.get("/api/market/history/{symbol}")
-def market_history(symbol:str,days:int=Field(default=30,ge=5,le=90)):
+def market_history(symbol:str,days:int=Query(default=30,ge=5,le=90)):
     symbol=symbol.upper()
     if symbol not in US_SYMBOLS:
         raise HTTPException(400,"Historical data is currently supported for selected US stocks.")
@@ -443,7 +443,7 @@ async def billing_webhook(request:Request,stripe_signature:Annotated[str | None,
     with db_conn() as db:
         if db.execute("SELECT 1 FROM stripe_events WHERE event_id=?",(event["id"],)).fetchone():
             return {"received":True}
-        if event_type=="checkout.session.completed" and obj.get("mode")=="subscription":
+        if event_type=="checkout.session.completed" and obj.get("mode")=="subscription" and obj.get("payment_status")=="paid":
             ref=obj.get("client_reference_id")
             subscription=obj.get("subscription")
             if ref and str(ref).isdigit() and subscription:
