@@ -17,5 +17,6 @@ jobs:
       - run: node --check static/app.js
       - run: node --check static/account.js
       - run: node --check static/market.js
+      - run: node --check static/paypal.js
       - run: python -m pytest -q
       - run: python -m pip_audit

@@ -96,3 +96,17 @@ To enable the feature, set the server-side environment variable `MONELIORA_TWELV
 - For public commercial display, independently confirm Twelve Data's exchange-specific commercial display/redistribution rights, pricing and rate limits. A consumer API key alone may not permit redistribution to your web visitors.
 
 Run `node --check static/market.js` and `pytest -q` before merging.
+
+
+## PayPal subscriptions (feature/paypal-subscriptions)
+
+PayPal is optional and **disabled until configured**. Configure a PayPal Business developer sandbox account, create a Product and recurring Billing Plans, set the PayPal client ID, secret and exact webhook ID in the server environment according to `.env.example`. Set webhook URL to `https://YOUR-DOMAIN/api/paypal/webhook` and subscribe it to subscription lifecycle events. For local tests, webhook delivery requires a secure publicly reachable development tunnel.
+
+Customers must sign in. They can choose Premium or Pro, approve the displayed price on PayPal, manually verify the actual provider status and cancel. The app does not create billing plans or set the price: the merchant's PayPal plan determines the amount and cadence. **Do not enable real payments without approved prices, legal terms and tests.** The client-side success return does **not** activate any entitlement; subscriptions are verified against PayPal using account-specific plan IDs and a unique checkout intent. Signed webhook notifications are checked with PayPal before reconciliation. Provider errors deliberately remain ambiguous and may require manual reconciliation. Existing Stripe subscriptions block PayPal checkouts and vice versa where known.
+
+### Operational and security gaps
+- First-party PayPal merchant configuration and webhook credentials are required; no keys included.
+- Sandbox tests simulate network responses and do not establish end-to-end PayPal certification. Run real sandbox approval, renewal, payment failure, refund, cancellation and webhook replay tests.
+- Subscription and webhook calls use SQLite; a production deployment needs durable queues, distributed locking, retries, manual reconciliation, alerts, support/return handling and refunds/chargebacks handling.
+- The PayPal environment defaults to sandbox. Live mode additionally requires HTTPS; all bank and billing details stay with PayPal.
+- Confirm tax/VAT and consumer withdrawal rules, subscription terms and all existing GDPR/security requirements before collecting real payments.

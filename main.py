@@ -12,6 +12,7 @@ import time
 from fastapi import FastAPI, Header, HTTPException, Request
 from platform_features import router as platform_router
 from market_data import router as market_router
+from paypal_billing import router as paypal_router
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, EmailStr, Field, field_validator
@@ -24,6 +25,7 @@ app = FastAPI(title="Moneliora", docs_url=None, redoc_url=None, openapi_url=None
 app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
 app.include_router(platform_router)
 app.include_router(market_router)
+app.include_router(paypal_router)
 rate_lock = threading.Lock()
 requests_by_client: dict[str, list[float]] = {}
 CSP = ("default-src 'none'; script-src 'self'; style-src 'self'; "
@@ -81,7 +83,7 @@ async def security_headers(request: Request, call_next):
     # Also apply headers on rejected requests, not only successful responses.
     rejection = None
     if request.method in ("POST", "PUT", "PATCH", "DELETE"):
-        if request.url.path == "/api/billing/webhook":
+        if request.url.path in ("/api/billing/webhook", "/api/paypal/webhook"):
             response = await call_next(request)
             response.headers.update(SECURITY_HEADERS)
             return response
