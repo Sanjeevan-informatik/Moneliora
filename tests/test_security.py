@@ -39,3 +39,14 @@ def test_validation_origin_and_admin():
 
 def test_home():
     assert client.get("/").status_code == 200
+
+
+def test_rejected_responses_have_security_headers():
+    payload = {"name":"Test User","email":"test@example.org","topic":"Learning",
+       "preferred_date":str(date.today()+timedelta(days=1)),
+       "message":"","privacy_accepted":True}
+    r=client.post("/api/consultations",json=payload,headers={"origin":"https://evil.example"})
+    assert r.status_code==403
+    assert r.headers["x-frame-options"]=="DENY"
+    assert client.post("/api/consultations",json={**payload,"admin":True}).status_code==422
+    assert client.post("/api/consultations",json=payload,headers={"content-length":"50000"}).status_code==413
