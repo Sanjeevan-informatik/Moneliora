@@ -8,6 +8,7 @@
   <title>Moneliora — Learn investing with confidence</title>
   <link rel="stylesheet" href="/static/styles.css">
   <script src="/static/app.js" defer></script>
+  <script src="/static/live_portfolio.js" defer></script>
   <script src="/static/account.js" defer></script>
   <script src="/static/market.js" defer></script>
   <script src="/static/paypal.js" defer></script>
@@ -22,6 +23,7 @@
         <a href="#home" data-nav="home" aria-current="page"><span aria-hidden="true">⌂</span> Home</a>
         <a href="#markets" data-nav="markets"><span aria-hidden="true">◈</span> Explore stocks</a>
         <a href="#live-market" data-nav="live-market"><span aria-hidden="true">⌁</span> Market charts</a>
+        <a href="#market-linked" data-nav="market-linked"><span aria-hidden="true">↗</span> Market-linked portfolio</a>
         <a href="#portfolio" data-nav="portfolio"><span aria-hidden="true">▣</span> Paper portfolio</a>
         <a href="#watchlist" data-nav="watchlist"><span aria-hidden="true">☆</span> Watchlist</a>
         <a href="#learn" data-nav="learn"><span aria-hidden="true">✧</span> Learning centre</a>
@@ -117,7 +119,25 @@
           <p class="hint">Source: Twelve Data. Prices are in USD, not EUR. Exchange timestamps and availability depend on the licensed provider plan. Closed markets and provider delays can make the latest quote old. Never treat this as a guaranteed real-time exchange feed.</p>
         </div>
       </section>
-      <section id="portfolio" aria-labelledby="portfolioTitle" class="page-section">
+      <section id="market-linked" class="page-section" aria-labelledby="linkedTitle">
+<div class="section-heading"><div><span class="eyebrow">OPTIONAL MARKET DATA</span><h2 id="linkedTitle">Market-linked virtual portfolio</h2>
+<p>Latest provider prices and USD/EUR conversion, refreshed approximately every 75 seconds. This is separate from the fictional practice account.</p></div></div>
+<div class="card">
+<p id="linkedStatus" role="status" aria-live="polite">Checking market data…</p>
+<div class="stats"><article class="stat-card"><span class="stat-label">Virtual portfolio value</span><strong id="linkedValue">—</strong></article>
+<article class="stat-card"><span class="stat-label">Virtual cash</span><strong id="linkedCash">€5,000.00</strong></article>
+<article class="stat-card"><span class="stat-label">Unrealised and realised result</span><strong id="linkedPL">—</strong></article></div>
+<div class="filterbar"><label class="field">US stock<select id="linkedSymbol"><option value="AAPL">Apple</option><option value="MSFT">Microsoft</option><option value="NVDA">NVIDIA</option><option value="TSLA">Tesla</option></select></label>
+<label class="field">Shares<input id="linkedQty" type="number" min="1" max="10000" step="1" value="1"></label>
+<button type="button" id="linkedBuy" class="button button-primary">Virtual buy</button><button type="button" id="linkedSell" class="button button-outline">Virtual sell</button>
+<button type="button" id="linkedRefresh" class="button button-outline">Refresh prices</button></div>
+<p id="linkedOrder" role="status" class="form-feedback"></p>
+<div id="linkedQuotes" class="watch-grid"></div>
+<h3>Your market-linked holdings</h3><div id="linkedHoldings" class="holdings"></div>
+<p id="linkedAsOf" class="hint"></p>
+<p class="hint">Provider: Twelve Data. Prices may be delayed, FX is indicative, and displayed profit/loss excludes broker fees, spreads and tax. Unsupported companies stay in the separate fictional demo. No real orders.</p>
+</div></section>
+<section id="portfolio" aria-labelledby="portfolioTitle" class="page-section">
         <div class="section-heading"><div><span class="eyebrow">YOUR PRACTICE SPACE</span><h2 id="portfolioTitle">Paper portfolio</h2><p>Experiment with orders, then see your imaginary holdings in one place.</p></div><button class="button button-outline" id="resetPortfolio">Reset account</button></div>
         <div class="two-col portfolio-grid">
           <article class="card">
