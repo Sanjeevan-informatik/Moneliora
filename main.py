@@ -12,6 +12,7 @@ import time
 from fastapi import FastAPI, Header, HTTPException, Request
 from platform_features import router as platform_router
 from market_data import router as market_router
+from market_snapshot import router as snapshot_router
 from paypal_billing import router as paypal_router
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -26,6 +27,7 @@ app = FastAPI(title="Moneliora", docs_url=None, redoc_url=None, openapi_url=None
 app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
 app.include_router(platform_router)
 app.include_router(market_router)
+app.include_router(snapshot_router)
 app.include_router(paypal_router)
 rate_lock = threading.Lock()
 requests_by_client: dict[str, list[float]] = {}
@@ -83,7 +85,7 @@ SECURITY_HEADERS = {
 async def security_headers(request: Request, call_next):
     # Fail closed for all stateful and provider APIs when a public demo is deployed.
     # Use /api/health for unauthenticated uptime checks only.
-    if PUBLIC_PREVIEW and request.url.path.startswith("/api/") and request.url.path != "/api/health":
+    if PUBLIC_PREVIEW and request.url.path.startswith("/api/") and request.url.path not in ("/api/health", "/api/quotes/status", "/api/quotes/snapshot") :
         response = JSONResponse(
             {"detail": "Customer accounts, billing and market feeds are disabled in this public demo."},
             status_code=403,
@@ -134,7 +136,7 @@ def home():
             '<body class="public-preview">'
             '<div class="preview-banner" role="status">'
             "PUBLIC EDUCATIONAL PREVIEW — simulated money and fictional stock prices only. "
-            "Accounts, contact forms, payments and live data are disabled.</div>",
+            "Accounts, contact forms and payments are disabled. Live quotes require a licensed provider.</div>",
             1,
         )
         return HTMLResponse(page)
