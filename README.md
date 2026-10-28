@@ -110,3 +110,10 @@ Customers must sign in. They can choose Premium or Pro, approve the displayed pr
 - Subscription and webhook calls use SQLite; a production deployment needs durable queues, distributed locking, retries, manual reconciliation, alerts, support/return handling and refunds/chargebacks handling.
 - The PayPal environment defaults to sandbox. Live mode additionally requires HTTPS; all bank and billing details stay with PayPal.
 - Confirm tax/VAT and consumer withdrawal rules, subscription terms and all existing GDPR/security requirements before collecting real payments.
+
+## Public educational preview deployment
+A safe demo deployment blueprint is provided in `render.yaml`. It sets `MONELIORA_PUBLIC_PREVIEW=true`, which **disables every API except the health endpoint** and hides account, consultation, market-data and payment screens. All visible stock prices remain fictional and portfolio state is kept only in the visitor's browser.
+
+Connect the GitHub repository to a hosting provider, select the `feature/public-preview-deployment` branch and deploy using the Render Blueprint (or manually configure equivalent Python runtime, build and start commands). The branch must be merged before auto-deployment from `main`. Set `MONELIORA_PUBLIC_PREVIEW=true` at the host; never upload payment or stock API keys to the preview environment. HTTPS is required for public serving. Render free-tier storage is ephemeral; the public demo intentionally does not persist server-side customer data.
+
+**Do not turn off preview mode in production yet.** Real subscriptions, user registration and personal details require an external security review, verified merchant accounts, database migrations, encrypted backups, legal notices, webhook replay testing, reconciled entitlements, account recovery and a production deployment review.
