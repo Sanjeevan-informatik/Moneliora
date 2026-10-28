@@ -7,7 +7,9 @@
   <meta name="description" content="Moneliora: a friendly place to learn about markets, compare costs and practise investing with fictional prices and virtual funds.">
   <title>Moneliora — Learn investing with confidence</title>
   <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/finance.js" defer></script>
   <script src="/static/app.js" defer></script>
+  <script src="/static/planner.js" defer></script>
   <script src="/static/live_portfolio.js" defer></script>
   <script src="/static/account.js" defer></script>
   <script src="/static/market.js" defer></script>
@@ -21,6 +23,8 @@
       <p class="nav-caption">YOUR SPACE</p>
       <nav class="nav" aria-label="Primary">
         <a href="#home" data-nav="home" aria-current="page"><span aria-hidden="true">⌂</span> Home</a>
+        <a href="#plan" data-nav="plan"><span aria-hidden="true">◎</span> Money plan</a>
+        <a href="#business" data-nav="business"><span aria-hidden="true">▥</span> Business lab</a>
         <a href="#markets" data-nav="markets"><span aria-hidden="true">◈</span> Explore stocks</a>
         <a href="#live-market" data-nav="live-market"><span aria-hidden="true">⌁</span> Market charts</a>
         <a href="#market-linked" data-nav="market-linked"><span aria-hidden="true">↗</span> Market-linked portfolio</a>
@@ -44,9 +48,9 @@
         <div class="hero">
           <div class="hero-content">
             <span class="eyebrow hero-eyebrow">YOUR MONEY LEARNING SPACE</span>
-            <h1 id="homeTitle">Investing starts with <em>understanding.</em></h1>
-            <p>Explore familiar companies, try a virtual investment and learn what the numbers mean—without risking real money.</p>
-            <div class="hero-actions"><a class="button button-primary" href="#markets">Explore companies <span aria-hidden="true">→</span></a><a class="button button-light" href="#learn">Start with the basics</a></div>
+            <h1 id="homeTitle">Give your money<br><em>a clearer direction.</em></h1>
+            <p>Understand your cash flow, explore your goals and practise investing. One calm workspace to turn financial questions into clearer decisions.</p>
+            <div class="hero-actions"><a class="button button-primary" href="#plan">Build your money plan <span aria-hidden="true">→</span></a><a class="button button-light" href="#learn">Start with the basics</a></div>
             <div class="hero-foot">✓ No sign-up required &nbsp; ✓ Virtual funds only &nbsp; ✓ Saved on your device</div>
           </div>
           <div class="hero-illustration" aria-hidden="true">
@@ -80,6 +84,172 @@
         </div>
       </section>
 
+<section id="plan" class="page-section" aria-labelledby="planTitle">
+<div class="section-heading">
+<div>
+<span class="eyebrow">PLAN BEFORE YOU INVEST</span>
+<h2 id="planTitle">Your money, with a plan.</h2>
+<p>Start with the example numbers. Adjust them to explore a different situation.</p>
+</div>
+<span class="subtle-tag">No account needed</span>
+</div>
+<div class="planner-toolbar">
+<p>Inputs stay in this tab unless you choose Save. Saved plans are unencrypted on this device.</p>
+<div class="button-row">
+<button id="savePlan" class="button button-outline">Save on this device</button>
+<button id="forgetPlan" class="button button-outline">Delete saved plan</button>
+<button id="exportPlan" class="button button-outline">Export scenario CSV</button>
+</div>
+<p id="planStorage" role="status">
+</p>
+</div>
+<div class="two-col">
+<form id="budgetForm" class="card" novalidate>
+<span class="eyebrow">01 / YOUR FOUNDATION</span>
+<h3>Make room for your goals</h3>
+<p>Use monthly take-home income. Include debt minimum payments separately from living costs.</p>
+<div class="field-pair">
+<label class="field">Net income / month (€)<input id="planIncome" name="planIncome" type="number" min="0" max="10000000" step="0.01" value="2800" required>
+</label>
+<label class="field">Essential spending / month (€)<input id="planEssential" name="planEssential" type="number" min="0" max="10000000" step="0.01" value="1400" required>
+</label>
+<label class="field">Flexible spending / month (€)<input id="planFlexible" name="planFlexible" type="number" min="0" max="10000000" step="0.01" value="450" required>
+</label>
+<label class="field">Debt payments / month (€)<input id="planDebt" name="planDebt" type="number" min="0" max="10000000" step="0.01" value="150" required>
+</label>
+<label class="field">Existing cash reserve (€)<input id="planReserve" name="planReserve" type="number" min="0" max="10000000" step="0.01" value="3000" required>
+</label>
+<label class="field">Reserve target (months)<input id="planMonths" name="planMonths" type="number" min="1" max="24" step="1" value="3" required>
+</label>
+</div>
+<div id="budgetResult" class="planner-result" role="status">
+</div>
+<p class="hint">Reserve target = (essentials + debt payments) × your chosen months. It excludes flexible spending; choose a buffer suitable for the scenario. This cash is separate from goal savings below.</p>
+</form>
+<form id="goalForm" class="card" novalidate>
+<span class="eyebrow">02 / YOUR NEXT CHAPTER</span>
+<h3>Explore a savings goal</h3>
+<p>Compare three constant-return scenarios after fees and inflation. Every rate is an editable assumption.</p>
+<div class="field-pair">
+<label class="field">Starting goal savings (€)<input id="goalInitial" name="goalInitial" type="number" min="0" max="10000000" step="0.01" value="1000" required>
+</label>
+<label class="field">Monthly contribution (€)<input id="goalMonthly" name="goalMonthly" type="number" min="0" max="100000" step="0.01" value="200" required>
+</label>
+<label class="field">Goal in today’s euros (€)<input id="goalTarget" name="goalTarget" type="number" min="0" max="10000000" step="0.01" value="30000" required>
+</label>
+<label class="field">Years to goal<input id="goalYears" name="goalYears" type="number" min="1" max="60" step="1" value="10" required>
+</label>
+<label class="field">Effective annual return (%)<input id="goalRate" name="goalRate" type="number" min="-99" max="50" step="0.1" value="5" required>
+</label>
+<label class="field">Annual fee (%)<input id="goalFee" name="goalFee" type="number" min="0" max="10" step="0.1" value="0.3" required>
+</label>
+<label class="field">Annual inflation (%)<input id="goalInflation" name="goalInflation" type="number" min="0" max="30" step="0.1" value="2" required>
+</label>
+<label class="field">Scenario difference (± percentage points)<input id="goalVariation" name="goalVariation" type="number" min="0" max="20" step="0.1" value="3" required>
+</label>
+</div>
+<p id="goalBudgetNote" class="insight-note">
+</p>
+<div id="goalResult" class="planner-result" role="status">
+</div>
+</form>
+</div>
+<article class="card scenario-card">
+<div class="card-head">
+<div>
+<span class="eyebrow">SEE THE BIGGER PICTURE</span>
+<h3>Possible paths, not promises</h3>
+</div>
+<span class="subtle-tag">Today’s purchasing power</span>
+</div>
+<svg id="goalChart" viewBox="0 0 760 250" role="img" aria-labelledby="goalChartTitle goalChartDesc">
+<title id="goalChartTitle">Hypothetical savings scenarios</title>
+<desc id="goalChartDesc">The table below provides the scenario end values.</desc>
+<g id="goalChartContent">
+</g>
+</svg>
+<div class="table-scroll">
+<table class="scenario-table">
+<caption>End values by assumed annual return</caption>
+<thead>
+<tr>
+<th scope="col">Scenario</th>
+<th scope="col">Return</th>
+<th scope="col">Future euros</th>
+<th scope="col">Today’s euros</th>
+<th scope="col">Goal gap (today’s €)</th>
+</tr>
+</thead>
+<tbody id="scenarioRows">
+</tbody>
+</table>
+</div>
+<p class="hint">Contributions arrive at each month end and stay fixed in nominal euros. Monthly growth = ((1 + annual return) × (1 − annual fee))^(1/12). Purchasing power divides by (1 + inflation)^years. No taxes, trading costs, volatility or probability estimates. The lower scenario is not a worst case; capital losses are possible.</p>
+<details>
+<summary>How to interpret these numbers</summary>
+<p>The goal is expressed in today’s purchasing power. A positive gap means additional savings would be needed under that assumption. The fee impact includes lost growth as well as modelled fees. Different market paths can produce very different results.</p>
+<p>Method references: <a href="https://www.investor.gov/financial-tools-calculators/calculators/compound-interest-calculator">Investor.gov compound interest</a> and <a href="https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins/updated">investment fees</a>.</p>
+</details>
+</article>
+<form id="debtForm" class="card scenario-card" novalidate>
+<span class="eyebrow">03 / UNDERSTAND YOUR BORROWING</span>
+<h3>Debt payoff explorer</h3>
+<div class="field-pair">
+<label class="field">Outstanding balance (€)<input id="debtBalance" name="debtBalance" type="number" min="0" max="10000000" step="0.01" value="5000" required>
+</label>
+<label class="field">Nominal annual interest (%)<input id="debtApr" name="debtApr" type="number" min="0" max="100" step="0.1" value="12" required>
+</label>
+<label class="field">Monthly payment (€)<input id="debtPayment" name="debtPayment" type="number" min="0" max="1000000" step="0.01" value="150" required>
+</label>
+<label class="field">Extra monthly payment (€)<input id="debtExtra" name="debtExtra" type="number" min="0" max="1000000" step="0.01" value="50" required>
+</label>
+</div>
+<div id="debtResult" class="planner-result" role="status">
+</div>
+<p class="hint">Fixed interest at annual rate / 12, charged before each month-end payment. No new borrowing, fees or early-repayment penalties. Assumes payments are affordable; contractual APR calculations may differ.</p>
+</form>
+</section>
+<section id="business" class="page-section" aria-labelledby="businessTitle">
+<div class="section-heading">
+<div>
+<span class="eyebrow">THE BUSINESS LAB</span>
+<h2 id="businessTitle">Does the idea add up?</h2>
+<p>Test one product or service with monthly unit economics.</p>
+</div>
+</div>
+<div class="two-col">
+<form id="businessForm" class="card" novalidate>
+<h3>Build a simple business case</h3>
+<div class="field-pair">
+<label class="field">Monthly fixed costs (€)<input id="bizFixed" name="bizFixed" type="number" min="0" max="1000000000.0" step="0.01" value="2000" required>
+</label>
+<label class="field">Selling price per unit (€)<input id="bizPrice" name="bizPrice" type="number" min="0" max="1000000000.0" step="0.01" value="50" required>
+</label>
+<label class="field">Variable cost per unit (€)<input id="bizVariable" name="bizVariable" type="number" min="0" max="1000000000.0" step="0.01" value="20" required>
+</label>
+<label class="field">Expected units sold / month<input id="bizUnits" name="bizUnits" type="number" min="0" max="1000000000.0" step="1" value="100" required>
+</label>
+<label class="field">Available business cash (€)<input id="bizCash" name="bizCash" type="number" min="0" max="1000000000.0" step="0.01" value="10000" required>
+</label>
+</div>
+<div id="businessResult" class="planner-result" role="status">
+</div>
+</form>
+<article class="card business-explainer">
+<span class="eyebrow">THINK LIKE AN OWNER</span>
+<h3>Revenue is only the beginning.</h3>
+<p>Contribution per unit is price minus variable cost. That contribution has to cover fixed costs before there is an operating surplus.</p>
+<div id="businessStress" class="planner-result" role="status">
+</div>
+<p>Cash runway here assumes the same operating loss every month and immediate collection of all sales. It does not model inventory, payment delays, capital expenditure, financing or tax.</p>
+<details>
+<summary>Model and source</summary>
+<p>Break-even units = fixed costs ÷ contribution per unit, rounded up. Amounts exclude VAT and income tax. Owner pay should be included in costs if relevant. This is a single-product estimate.</p>
+<a href="https://www.sba.gov/business-guide/plan-your-business/calculate-your-startup-costs/break-even-point">SBA break-even guide</a>
+</details>
+</article>
+</div>
+</section>
       <section id="markets" aria-labelledby="marketsTitle" class="page-section">
         <div class="section-heading"><div><span class="eyebrow">DISCOVER</span><h2 id="marketsTitle">Explore companies</h2><p>Search companies you recognise. Select one to practise a virtual trade.</p></div><span class="subtle-tag">Example prices only</span></div>
         <div class="filterbar">
@@ -88,7 +258,7 @@
           <label class="check-filter"><input id="watchOnly" type="checkbox"> Watchlisted only</label>
         </div>
         <p class="results-count" id="resultsCount" role="status">Companies available</p>
-        <div class="market-grid" id="markets"></div>
+        <div class="market-grid" id="marketCards"></div>
         <div class="empty-state" id="marketEmpty" hidden><strong>No companies match that search.</strong><p>Try another company name or clear your filters.</p><button class="button button-outline" id="clearFilters">Clear filters</button></div>
         <p class="hint">All listed prices are intentionally fictional and fixed. They are not exchange quotes, investment recommendations, or historical performance.</p>
       </section>
@@ -155,6 +325,7 @@
             <div class="allocation-track" id="allocationTrack" role="img" aria-label="Portfolio allocation"><span id="allocationFilled"></span></div>
             <div class="allocation-key"><span><i class="key-invested"></i> Invested: <b id="allocationInvested">0%</b></span><span><i class="key-cash"></i> Cash: <b id="allocationCash">100%</b></span></div>
             <div id="holdings" class="holdings"></div>
+            <p id="concentration" class="insight-note" role="status"></p>
           </article>
         </div>
         <article class="card history-card"><div class="card-head"><div><span class="eyebrow">YOUR ACTIVITY</span><h3>Recent virtual trades</h3></div><small>Stored on this device</small></div><div id="tradeHistory" class="activity-list"></div></article>
@@ -190,7 +361,7 @@
         <div class="tools-grid">
           <article class="card"><span class="tool-icon" aria-hidden="true">↗</span><h3>Investment growth</h3><p class="form-intro">Explore how time, contributions and assumed growth affect a possible outcome.</p>
             <div class="field-pair"><label class="field">Starting amount (€)<input id="initial" type="number" min="0" max="10000000" value="500"></label><label class="field">Monthly contribution (€)<input id="monthly" type="number" min="0" max="100000" value="100"></label></div>
-            <div class="field-pair"><label class="field">Annual assumed return (%)<input id="returnRate" type="number" min="-99" max="50" step="0.5" value="5"></label><label class="field">Number of years<input id="years" type="number" min="1" max="60" step="1" value="10"></label></div>
+            <div class="field-pair"><label class="field">Effective annual assumed return (%)<input id="returnRate" type="number" min="-99" max="50" step="0.5" value="5"></label><label class="field">Number of years<input id="years" type="number" min="1" max="60" step="1" value="10"></label></div>
             <div class="calculation"><span>Illustrative end value</span><strong id="growthResult">—</strong><small id="growthDetail"></small></div>
             <p class="hint">A fixed assumed return is not a forecast. Actual markets fluctuate; taxes, inflation and fees are omitted.</p>
           </article>

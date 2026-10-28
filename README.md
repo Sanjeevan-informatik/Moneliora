@@ -117,3 +117,29 @@ A safe demo deployment blueprint is provided in `render.yaml`. It sets `MONELIOR
 Connect the GitHub repository to a hosting provider, select the `feature/public-preview-deployment` branch and deploy using the Render Blueprint (or manually configure equivalent Python runtime, build and start commands). The branch must be merged before auto-deployment from `main`. Set `MONELIORA_PUBLIC_PREVIEW=true` at the host; never upload payment or stock API keys to the preview environment. HTTPS is required for public serving. Render free-tier storage is ephemeral; the public demo intentionally does not persist server-side customer data.
 
 **Do not turn off preview mode in production yet.** Real subscriptions, user registration and personal details require an external security review, verified merchant accounts, database migrations, encrypted backups, legal notices, webhook replay testing, reconciled entitlements, account recovery and a production deployment review.
+
+## Money plan and business lab
+
+The public preview now includes a browser-only planning workspace:
+
+- Monthly cash flow, reserve coverage and a user-selected emergency reserve target.
+- Three adjustable goal scenarios, with effective annual returns, proportional annual fees, fixed month-end contributions and inflation-adjusted purchasing power. A chart, accessible end-value table and annual CSV export use the same calculation engine.
+- Debt payoff comparison with extra payments and explicit handling of payments that do not reduce principal.
+- Single-product business contribution margin, break-even units, operating cash runway and a 20% sales-reduction stress test.
+- Optional device-local saving and deletion. Inputs are not sent to the server; saved plans are unencrypted and accessible to anyone using the browser. Goal savings and cash reserves are separate inputs and should not double-count the same money.
+- Paper-portfolio concentration context, improved text contrast and scrollable desktop navigation.
+
+All example values are illustrative, not recommended allocations, market forecasts or tax advice. These tools do not establish investment suitability. Model assumptions and educational source links are available alongside the results. Existing accounts, billing and provider integrations retain their existing deployment restrictions.
+
+### Developer verification
+
+```bash
+python -m pytest -q
+node --test tests/finance.test.cjs
+node --check static/planner.js
+node --check static/finance.js
+```
+
+Node 22+ is used in CI. Pure financial-model tests cover zero and negative returns, fee drag, inflation, invalid values, non-amortizing loans and nonpositive business margins. Python tests isolate databases and verify unique HTML IDs plus configured/unconfigured market snapshot behavior.
+
+Optional browser smoke test (with Playwright and its Chromium browser installed): start Uvicorn, then run `node tests/browser_smoke.cjs`. Set `MONELIORA_TEST_URL` to test another local port. It exercises explorer filtering, virtual trades, watchlists, planner validation, save/reload/delete, corrupt saved data, CSV downloads and desktop/mobile overflow.

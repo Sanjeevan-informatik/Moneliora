@@ -22,3 +22,18 @@
 .public-preview a[data-nav="account"],.public-preview a[data-nav="consult"],
 .public-preview a[data-nav="live-market"]{display:none!important}
 .public-preview .topline-right{display:none}
+
+/* Planning workspace */
+.sidebar{overflow-y:auto}.side-bottom{margin-top:24px}.nav-caption{margin-top:28px}
+.planner-toolbar{padding:18px 22px;background:#eaf3f1;border:1px solid #d3e6e0;border-radius:14px;margin-bottom:18px}
+.planner-toolbar p{font-size:12px;color:#425e68;margin:0;line-height:1.6}.planner-toolbar .button-row{margin:12px 0}.planner-toolbar [role=status]{font-weight:700}
+.planner-result{border-top:1px solid #dde9e5;padding-top:14px;margin-top:16px;line-height:1.7;font-size:14px;color:#214b4b}
+.planner-result strong{font-size:26px;letter-spacing:-.7px;display:block;color:#126c5c}.planner-result p{margin:6px 0;color:#425c67}.planner-result.is-error{color:#a33333}
+.insight-note{padding:12px 15px;background:#f1f6f7;border-left:3px solid #72afa1;border-radius:0 8px 8px 0;color:#425c67!important;font-size:12px;line-height:1.6}
+.scenario-card{margin-top:18px}#goalChart{width:100%;height:auto;display:block;margin:20px 0}.chart-axis{fill:#536b77;font-size:12px}.scenario-line{fill:none;stroke-width:3;stroke-linejoin:round}.scenario-low{stroke:#8870ad}.scenario-base{stroke:#087d71}.scenario-high{stroke:#3979ae}
+.table-scroll{overflow-x:auto}.scenario-table{width:100%;border-collapse:collapse;font-size:13px;text-align:left}.scenario-table caption{text-align:left;font-weight:700;padding:10px 0}.scenario-table th{color:#4f6875;font-size:11px;background:#f3f7f8}.scenario-table td,.scenario-table th{padding:14px 12px;border-bottom:1px solid #e3ebed;white-space:nowrap}.scenario-table tr:nth-child(2) td{background:#f0faf6}
+.business-explainer{background:linear-gradient(145deg,#f1faf6,#fff)}.hint{color:#586e7c!important}.stat-card small{color:#617582}
+input[aria-invalid=true]{border-color:#ac4040;background:#fff7f5}
+@media(max-width:760px){.sidebar{overflow:visible}.planner-toolbar{padding:16px}.planner-toolbar .button{flex:1}.scenario-table td,.scenario-table th{padding:12px 8px}}
+/* Keep the preview notice from covering anchor destinations on small screens. */
+.preview-banner{position:relative}
