@@ -1,41 +1,194 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="Moneliora — learn investing, compare costs and practise with virtual funds.">
-<title>Moneliora · Financial clarity</title><link rel="stylesheet" href="/static/styles.css"></head>
-<body><div class="shell"><aside class="sidebar"><div class="brand"><div class="mark">M</div> Moneliora</div>
-<div class="side-caption">YOUR WORKSPACE</div><nav aria-label="Main navigation">
-<a href="#overview">◫ &nbsp;Overview</a><a href="#explore">◎ &nbsp;Markets</a>
-<a href="#portfolio">◈ &nbsp;Paper portfolio</a><a href="#tools">▤ &nbsp;Calculators</a>
-<a href="#consult">◷ &nbsp;Consultation</a></nav>
-<div class="sidebar-note">EDUCATION SANDBOX<br><small>Not investment advice, a brokerage or a source of live prices.</small></div></aside>
-<main><header><div><p class="eyebrow">YOUR FINANCIAL LEARNING SPACE</p><h1>Invest with clarity<span class="accent">.</span></h1><p class="sub">Learn the fundamentals, compare costs and practise investing without real money.</p></div><span class="pill">● Virtual money only</span></header>
-<section id="overview"><div class="summary"><article class="stat"><small>Virtual portfolio</small><strong id="portfolioValue">€5,000.00</strong><span>Illustrative account value</span></article>
-<article class="stat"><small>Available virtual cash</small><strong id="cashValue">€5,000.00</strong><span>Starts with €5,000</span></article>
-<article class="stat"><small>Paper P/L</small><strong id="plValue">€0.00</strong><span>Not actual performance</span></article></div>
-<div class="notice"><b>Learning mode.</b> All stock prices below are fictional educational examples. No exchange connection, real-time quotes, deposits or actual securities orders.</div></section>
-<section id="explore"><div class="section-head"><div><p class="eyebrow">DISCOVER</p><h2>Explore companies</h2></div><p>Sample prices in EUR · not market data</p></div>
-<div id="markets" class="market-grid"></div></section>
-<section id="watchlist"><div class="section-head"><div><p class="eyebrow">TRACK</p><h2>My watchlist</h2></div><p>Saved only on this device</p></div><div class="panel"><label>Choose company<select id="watchSymbol"></select></label><button class="secondary" id="watchAdd">Add to watchlist</button><div id="watchItems" class="holdings"></div></div></section>
-<section id="portfolio"><div class="section-head"><div><p class="eyebrow">PRACTISE</p><h2>Your paper portfolio</h2></div><button id="resetPortfolio" class="ghost">Reset sandbox</button></div>
-<div class="twocol"><div class="panel"><h3>Simulate a trade</h3><label>Company<select id="tradeSymbol"></select></label><label>Shares<input id="tradeQty" type="number" min="1" max="100000" step="1" value="1"></label><p class="muted" id="tradeEstimate"></p><div class="row"><button id="buy" class="primary">Virtual buy</button><button id="sell" class="secondary">Virtual sell</button></div><p id="tradeNotice" role="status" class="feedback"></p></div>
-<div class="panel"><h3>Current holdings</h3><div id="holdings" class="holdings"></div></div></div></section>
-<section id="tools"><div class="section-head"><div><p class="eyebrow">PLAN</p><h2>Financial tools</h2></div><p>Illustrative scenarios, not forecasts</p></div>
-<div class="twocol"><div class="panel"><h3>Investment growth simulator</h3><label>Initial investment (€)<input id="initial" type="number" min="0" max="10000000" value="500"></label>
-<label>Monthly contribution (€)<input id="monthly" type="number" min="0" max="100000" value="100"></label>
-<label>Annual hypothetical return (%)<input id="returnRate" type="number" min="-99" max="50" step=".5" value="5"></label>
-<label>Years<input id="years" type="number" min="1" max="60" value="10"></label>
-<div class="output"><small>Illustrative end value</small><strong id="growthResult"></strong><span id="growthDetail"></span></div></div>
-<div class="panel"><h3>Broker fee comparison</h3><label>Order value (€)<input id="orderValue" type="number" min="1" value="500"></label>
-<label>Order fee (€)<input id="orderFee" type="number" min="0" step=".01" value="1"></label>
-<label>Spread estimate (%)<input id="spread" type="number" min="0" max="100" step=".01" value=".2"></label>
-<div class="output"><small>Estimated transaction cost</small><strong id="feeResult"></strong><span id="feeDetail"></span></div><p class="muted">Model excludes taxes, FX costs, custody charges and other broker-specific fees. Fees are user supplied.</p></div></div></section>
-<section id="risk"><div class="section-head"><div><p class="eyebrow">UNDERSTAND DOWNSIDE</p><h2>Loss scenario calculator</h2></div></div><div class="panel"><label>Investment amount (€)<input id="riskAmount" type="number" min="0" max="10000000" value="500"></label><label>Hypothetical market decline (%)<input id="riskDrop" type="number" min="0" max="100" value="30"></label><div class="output"><small>Illustrative value after decline</small><strong id="riskValue"></strong><span id="riskLoss"></span></div></div></section>
-<section id="consult"><div class="section-head"><div><p class="eyebrow">GET SUPPORT</p><h2>Request an educational session</h2></div></div>
-<div class="twocol"><div class="panel"><h3>Topics we can cover</h3><p>Understanding market orders, ETFs versus stocks, platform navigation, fees and portfolio risks.</p>
-<p class="muted">No personalised buy/sell recommendations or regulated financial advice.</p></div>
-<form class="panel" id="consultForm"><h3>Consultation request</h3><label>Full name<input name="name" required minlength="2" maxlength="80"></label>
-<label>Email address<input name="email" type="email" required></label><label>Topic<input name="topic" required minlength="3" maxlength="80" value="Broker platform education"></label>
-<label>Preferred date<input name="preferred_date" id="preferredDate" type="date" required></label><label>Message<textarea name="message" maxlength="1200" rows="3" placeholder="What would you like to learn?"></textarea></label>
-<label class="check"><input name="privacy_accepted" type="checkbox" required><span>I consent to the use of these details to respond to my request. Records are automatically deleted after 90 days.</span></label><button class="primary" type="submit">Send request</button><p role="status" id="consultStatus" class="feedback"></p></form></div></section>
-<footer>© Moneliora · Educational prototype · No live securities trading. Before commercial launch: privacy notice, Impressum, qualified legal review and external security assessment required.</footer>
-</main></div><script src="/static/app.js" defer></script></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#10263a">
+  <meta name="description" content="Moneliora: a friendly place to learn about markets, compare costs and practise investing with fictional prices and virtual funds.">
+  <title>Moneliora — Learn investing with confidence</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <div class="layout">
+    <aside class="sidebar" aria-label="Main menu">
+      <a class="brand" href="#home" aria-label="Moneliora home"><span class="logo">m</span><span>moneliora<small>Learn. Explore. Practise.</small></span></a>
+      <p class="nav-caption">YOUR SPACE</p>
+      <nav class="nav" aria-label="Primary">
+        <a href="#home" data-nav="home" aria-current="page"><span aria-hidden="true">⌂</span> Home</a>
+        <a href="#markets" data-nav="markets"><span aria-hidden="true">◈</span> Explore stocks</a>
+        <a href="#portfolio" data-nav="portfolio"><span aria-hidden="true">▣</span> Paper portfolio</a>
+        <a href="#watchlist" data-nav="watchlist"><span aria-hidden="true">☆</span> Watchlist</a>
+        <a href="#learn" data-nav="learn"><span aria-hidden="true">✧</span> Learning centre</a>
+        <a href="#tools" data-nav="tools"><span aria-hidden="true">▤</span> Calculators</a>
+        <a href="#consult" data-nav="consult"><span aria-hidden="true">◷</span> Get help</a>
+      </nav>
+      <div class="side-bottom">
+        <div class="side-badge">● SIMULATION MODE</div>
+        <p>Private virtual portfolio in this browser. No real trades or bank connections.</p>
+      </div>
+    </aside>
+
+    <main id="main" class="content">
+      <div class="topline"><span class="topline-left"><span class="status-dot"></span> Moneliora learning studio</span><span class="topline-right">Fictional EUR prices · No live market feed</span></div>
+
+      <section id="home" aria-labelledby="homeTitle" class="page-section home-section">
+        <div class="hero">
+          <div class="hero-content">
+            <span class="eyebrow hero-eyebrow">YOUR MONEY LEARNING SPACE</span>
+            <h1 id="homeTitle">Investing starts with <em>understanding.</em></h1>
+            <p>Explore familiar companies, try a virtual investment and learn what the numbers mean—without risking real money.</p>
+            <div class="hero-actions"><a class="button button-primary" href="#markets">Explore companies <span aria-hidden="true">→</span></a><a class="button button-light" href="#learn">Start with the basics</a></div>
+            <div class="hero-foot">✓ No sign-up required &nbsp; ✓ Virtual funds only &nbsp; ✓ Saved on your device</div>
+          </div>
+          <div class="hero-illustration" aria-hidden="true">
+            <div class="mini-panel"><span>YOUR PRACTICE ACCOUNT</span><strong>€5,000<span class="mini-decimal">.00</span></strong><div class="mini-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><small>For learning, not investing</small></div>
+          </div>
+        </div>
+
+        <div class="section-heading slim"><div><span class="eyebrow">YOUR OVERVIEW</span><h2>A simple place to start</h2></div><a href="#portfolio" class="text-link">Open portfolio →</a></div>
+        <div class="stats">
+          <article class="stat-card"><span class="stat-label">Practice account total</span><strong id="portfolioValue">€5,000.00</strong><small>Virtual money · fictional prices</small></article>
+          <article class="stat-card"><span class="stat-label">Available to practise</span><strong id="cashValue">€5,000.00</strong><small>Uninvested virtual cash</small></article>
+          <article class="stat-card"><span class="stat-label">Used for practice</span><strong id="investedValue">€0.00</strong><small id="holdingsCount">0 companies held</small></article>
+        </div>
+        <div class="split-panels">
+          <article class="card progress-card">
+            <div class="card-head"><div><span class="eyebrow">START HERE</span><h3>Your first 3 steps</h3></div><span class="counter" id="stepsCounter">0 of 3</span></div>
+            <div class="progress-track" aria-hidden="true"><div id="stepsFill"></div></div>
+            <ol class="steps">
+              <li id="stepExplore"><span class="step-mark">1</span><div><b>Discover a company</b><p>Choose something familiar to explore.</p></div><a href="#markets" aria-label="Explore companies">Go →</a></li>
+              <li id="stepTrade"><span class="step-mark">2</span><div><b>Try your first virtual trade</b><p>See how a practice order works.</p></div><a href="#portfolio" aria-label="Make a practice trade">Go →</a></li>
+              <li id="stepRisk"><span class="step-mark">3</span><div><b>Understand what you could lose</b><p>Experiment with the downside calculator.</p></div><a href="#tools" aria-label="Open risk calculator">Go →</a></li>
+            </ol>
+          </article>
+          <article class="card guide-card">
+            <span class="eyebrow">PLAIN ENGLISH</span><h3>What is paper trading?</h3>
+            <p>It's a practice version of investing. You choose shares with fictional prices and spend imaginary euros. Your real bank account is never involved.</p>
+            <p>It's useful for learning how orders and portfolios work—but it cannot predict actual investment performance.</p>
+            <a href="#learn" class="text-link">Learn more about investing →</a>
+            <div class="guide-mark" aria-hidden="true">?</div>
+          </article>
+        </div>
+      </section>
+
+      <section id="markets" aria-labelledby="marketsTitle" class="page-section">
+        <div class="section-heading"><div><span class="eyebrow">DISCOVER</span><h2 id="marketsTitle">Explore companies</h2><p>Search companies you recognise. Select one to practise a virtual trade.</p></div><span class="subtle-tag">Example prices only</span></div>
+        <div class="filterbar">
+          <label class="searchbox" for="stockSearch"><span aria-hidden="true">⌕</span><span class="sr-only">Search company name or symbol</span><input id="stockSearch" type="search" placeholder="Search a company, e.g. Apple or Xiaomi" autocomplete="off"></label>
+          <label class="selectbox">Industry <select id="sectorFilter"><option value="all">All industries</option><option value="Technology">Technology</option><option value="Automotive">Automotive</option><option value="Aerospace">Aerospace</option></select></label>
+          <label class="check-filter"><input id="watchOnly" type="checkbox"> Watchlisted only</label>
+        </div>
+        <p class="results-count" id="resultsCount" role="status">Companies available</p>
+        <div class="market-grid" id="markets"></div>
+        <div class="empty-state" id="marketEmpty" hidden><strong>No companies match that search.</strong><p>Try another company name or clear your filters.</p><button class="button button-outline" id="clearFilters">Clear filters</button></div>
+        <p class="hint">All listed prices are intentionally fictional and fixed. They are not exchange quotes, investment recommendations, or historical performance.</p>
+      </section>
+
+      <section id="portfolio" aria-labelledby="portfolioTitle" class="page-section">
+        <div class="section-heading"><div><span class="eyebrow">YOUR PRACTICE SPACE</span><h2 id="portfolioTitle">Paper portfolio</h2><p>Experiment with orders, then see your imaginary holdings in one place.</p></div><button class="button button-outline" id="resetPortfolio">Reset account</button></div>
+        <div class="two-col portfolio-grid">
+          <article class="card">
+            <span class="eyebrow">VIRTUAL ORDER</span><h3>Make a practice trade</h3>
+            <p class="form-intro">Pick a company and number of shares. No real money changes hands.</p>
+            <label class="field">Choose a company<select id="tradeSymbol"></select></label>
+            <label class="field">Number of shares<input id="tradeQty" type="number" min="1" max="100000" step="1" inputmode="numeric" value="1"></label>
+            <div class="order-preview" aria-live="polite"><span>Estimated practice order</span><strong id="tradeEstimate">€0.00</strong><small id="tradeAvailable">Virtual cash available: €5,000.00</small></div>
+            <div class="button-row"><button id="buy" class="button button-primary">Buy virtually</button><button id="sell" class="button button-outline">Sell virtually</button></div>
+            <p id="tradeNotice" class="form-feedback" role="status"></p>
+            <small class="hint">Whole shares only. Fictional prices remain fixed, so this simulation does not model real gains or losses.</small>
+          </article>
+          <article class="card">
+            <div class="card-head"><div><span class="eyebrow">YOUR ALLOCATION</span><h3>What you own virtually</h3></div><span class="subtle-tag">Browser only</span></div>
+            <div class="allocation-track" id="allocationTrack" role="img" aria-label="Portfolio allocation"><span id="allocationFilled"></span></div>
+            <div class="allocation-key"><span><i class="key-invested"></i> Invested: <b id="allocationInvested">0%</b></span><span><i class="key-cash"></i> Cash: <b id="allocationCash">100%</b></span></div>
+            <div id="holdings" class="holdings"></div>
+          </article>
+        </div>
+        <article class="card history-card"><div class="card-head"><div><span class="eyebrow">YOUR ACTIVITY</span><h3>Recent virtual trades</h3></div><small>Stored on this device</small></div><div id="tradeHistory" class="activity-list"></div></article>
+      </section>
+
+      <section id="watchlist" aria-labelledby="watchlistTitle" class="page-section">
+        <div class="section-heading"><div><span class="eyebrow">SAVE YOUR FAVOURITES</span><h2 id="watchlistTitle">Watchlist</h2><p>Keep track of companies you want to learn about. The list stays in this browser.</p></div><a href="#markets" class="text-link">Explore companies →</a></div>
+        <div class="card"><div class="watch-intro">Tip: Select the star on a company card to add or remove it from your watchlist.</div><div id="watchItems" class="watch-grid"></div></div>
+      </section>
+
+      <section id="learn" aria-labelledby="learnTitle" class="page-section">
+        <div class="section-heading"><div><span class="eyebrow">LEARNING CENTRE</span><h2 id="learnTitle">Learn the basics</h2><p>Short, practical explanations—no finance jargon required.</p></div></div>
+        <div class="learning-grid">
+          <article class="lesson"><span class="lesson-number">01</span><h3>Shares</h3><p>A share represents a small ownership interest in a company. Its price can rise or fall, and you could lose money.</p></article>
+          <article class="lesson"><span class="lesson-number">02</span><h3>ETFs</h3><p>An exchange-traded fund can hold many assets. Diversification can reduce company-specific risk, but does not eliminate losses.</p></article>
+          <article class="lesson"><span class="lesson-number">03</span><h3>Fees & spreads</h3><p>Costs can include an order fee and the spread between buying and selling prices. They reduce your investment return.</p></article>
+        </div>
+        <div class="two-col">
+          <article class="card"><span class="eyebrow">QUICK KNOWLEDGE CHECK</span><h3>Can a diversified investment lose value?</h3><p>Choose an answer to see the explanation.</p>
+            <div class="button-row"><button id="quizYes" class="button button-outline" type="button">Yes, it can</button><button id="quizNo" class="button button-outline" type="button">No, never</button></div>
+            <p id="quizFeedback" role="status" class="form-feedback"></p>
+          </article>
+          <article class="card"><span class="eyebrow">COMMON QUESTIONS</span><h3>Good things to know</h3>
+            <details><summary>Is Moneliora a stockbroker?</summary><p>No. This learning app cannot place orders or hold real investments.</p></details>
+            <details><summary>Are these today's stock prices?</summary><p>No. The displayed figures are fixed fictional examples for educational calculations.</p></details>
+            <details><summary>Do I need to register?</summary><p>No. Your practice holdings and watchlist are kept in your browser, not a user account. Clearing site data may erase them.</p></details>
+          </article>
+        </div>
+      </section>
+
+      <section id="tools" aria-labelledby="toolsTitle" class="page-section">
+        <div class="section-heading"><div><span class="eyebrow">INTERACTIVE TOOLS</span><h2 id="toolsTitle">Make the numbers make sense</h2><p>Change the inputs and see the impact right away. All results are hypothetical.</p></div></div>
+        <div class="tools-grid">
+          <article class="card"><span class="tool-icon" aria-hidden="true">↗</span><h3>Investment growth</h3><p class="form-intro">Explore how time, contributions and assumed growth affect a possible outcome.</p>
+            <div class="field-pair"><label class="field">Starting amount (€)<input id="initial" type="number" min="0" max="10000000" value="500"></label><label class="field">Monthly contribution (€)<input id="monthly" type="number" min="0" max="100000" value="100"></label></div>
+            <div class="field-pair"><label class="field">Annual assumed return (%)<input id="returnRate" type="number" min="-99" max="50" step="0.5" value="5"></label><label class="field">Number of years<input id="years" type="number" min="1" max="60" step="1" value="10"></label></div>
+            <div class="calculation"><span>Illustrative end value</span><strong id="growthResult">—</strong><small id="growthDetail"></small></div>
+            <p class="hint">A fixed assumed return is not a forecast. Actual markets fluctuate; taxes, inflation and fees are omitted.</p>
+          </article>
+          <article class="card"><span class="tool-icon" aria-hidden="true">€</span><h3>Transaction costs</h3><p class="form-intro">Estimate how much an order fee and assumed spread might cost.</p>
+            <label class="field">Order value (€)<input id="orderValue" type="number" min="1" max="100000000" value="500"></label>
+            <div class="field-pair"><label class="field">Broker order fee (€)<input id="orderFee" type="number" min="0" max="1000000" step="0.01" value="1"></label><label class="field">Assumed spread (%)<input id="spread" type="number" min="0" max="100" step="0.01" value="0.2"></label></div>
+            <div class="calculation"><span>Estimated transaction cost</span><strong id="feeResult">—</strong><small id="feeDetail"></small></div>
+            <p class="hint">User-entered costs are examples. Other broker fees, currency exchange and taxes are excluded.</p>
+          </article>
+          <article class="card risk-card"><span class="tool-icon" aria-hidden="true">↘</span><h3>Understand downside risk</h3><p class="form-intro">See what a hypothetical market decline would mean for your money.</p>
+            <label class="field">Investment amount (€)<input id="riskAmount" type="number" min="0" max="10000000" value="500"></label>
+            <label class="field">Hypothetical decline (%)<input id="riskDrop" type="number" min="0" max="100" value="30"></label>
+            <div class="risk-preset" aria-label="Example declines"><button class="preset" data-drop="10">−10%</button><button class="preset" data-drop="30">−30%</button><button class="preset" data-drop="50">−50%</button></div>
+            <div class="calculation danger"><span>Value after hypothetical fall</span><strong id="riskValue">—</strong><small id="riskLoss"></small></div>
+            <p class="hint">This is a scenario, not a prediction or calculation of your personal risk tolerance.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="consult" aria-labelledby="consultTitle" class="page-section">
+        <div class="section-heading"><div><span class="eyebrow">WE CAN EXPLAIN</span><h2 id="consultTitle">Ask for a learning session</h2><p>Questions about platforms, fees, ETFs or how a virtual order works?</p></div></div>
+        <div class="two-col consult-grid">
+          <div class="consult-info"><h3>Clear answers, without pressure.</h3><p>This prototype accepts requests for educational sessions only. A request is not a confirmed appointment.</p>
+            <ul><li>Understand investing terminology</li><li>Learn how brokerage interfaces work</li><li>Compare cost structures</li><li>Understand diversification and risk</li></ul>
+            <p class="consult-warning">We do not provide individual investment recommendations, manage money, or execute real trades.</p>
+          </div>
+          <form class="card" id="consultForm">
+            <h3>Request information</h3>
+            <p class="hint">This is a local development prototype. Use test contact details only until privacy and production safeguards are complete.</p>
+            <label class="field">Your name<input name="name" required minlength="2" maxlength="80" autocomplete="name"></label>
+            <label class="field">Email address<input name="email" type="email" maxlength="254" required autocomplete="email"></label>
+            <label class="field">What would you like to learn?<select name="topic" required><option value="Understanding investment platforms">Understanding investment platforms</option><option value="Understanding ETFs and stocks">Understanding ETFs and stocks</option><option value="Broker fees and charges">Broker fees and charges</option><option value="Paper trading introduction">Paper trading introduction</option></select></label>
+            <label class="field">Preferred date<input name="preferred_date" id="preferredDate" type="date" required></label>
+            <label class="field">Your question (optional)<textarea name="message" maxlength="1200" rows="3" placeholder="Tell us what you'd like to understand…"></textarea></label>
+            <label class="consent"><input name="privacy_accepted" type="checkbox" required><span>I agree that my request details can be stored for a reply. The demo has a 90-day retention rule, but deletion runs on new requests and needs a scheduled job before launch.</span></label>
+            <button class="button button-primary full" type="submit" id="consultSubmit">Send learning request →</button><p class="form-feedback" id="consultStatus" role="status"></p>
+          </form>
+        </div>
+      </section>
+      <footer><strong>moneliora</strong><span>Educational simulation only · Not live prices or investment advice · No real trading</span><span>Before public launch: privacy notice, Impressum, legal review and independent security testing.</span></footer>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  <dialog id="resetDialog" aria-labelledby="resetTitle">
+    <form method="dialog" class="dialog-body">
+      <div class="dialog-icon" aria-hidden="true">!</div><h2 id="resetTitle">Reset your practice account?</h2>
+      <p>This clears your virtual holdings and trade history, then restores €5,000 in virtual cash. Your watchlist will stay.</p>
+      <div class="button-row"><button class="button button-outline" value="cancel">Keep my portfolio</button><button class="button button-danger" id="confirmReset" value="confirm">Yes, reset it</button></div>
+    </form>
+  </dialog>
+</body>
+</html>
