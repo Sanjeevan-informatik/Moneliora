@@ -17,8 +17,8 @@ import time
 
 import pyotp
 from argon2 import PasswordHasher, exceptions as argon_exc
-from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Request, Response
-from pydantic import BaseModel, EmailStr, Field, Query, field_validator, model_validator
+from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Query, Request, Response
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 
 router = APIRouter()
 DB = Path(os.getenv("MONELIORA_DB", str(Path(__file__).resolve().parent / "data" / "moneliora.db")))
