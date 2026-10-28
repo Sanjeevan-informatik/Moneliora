@@ -44,7 +44,7 @@ function toggleWatch(symbol){if(watched.includes(symbol))watched=watched.filter(
 function renderMarkets(){
 const query=$("stockSearch").value.trim().toLowerCase(),sector=$("sectorFilter").value,only=$("watchOnly").checked;
 const found=companies.filter(c=>(!query||(c.name+" "+c.symbol).toLowerCase().includes(query))&&(sector==="all"||sector===c.sector)&&(!only||watched.includes(c.symbol)));
-const root=$("markets");root.replaceChildren();$("resultsCount").textContent=found.length+" of "+companies.length+" example companies";$("marketEmpty").hidden=found.length!==0;
+const root=$("marketCards");root.replaceChildren();$("resultsCount").textContent=found.length+" of "+companies.length+" example companies";$("marketEmpty").hidden=found.length!==0;
 for(const c of found){
 const card=document.createElement("article");card.className="market-card";const top=document.createElement("div");top.className="market-top";
 const ticker=document.createElement("span");ticker.className="symbol";ticker.textContent=c.symbol+" · DEMO";
@@ -68,6 +68,9 @@ if(!root.children.length){const p=document.createElement("p");p.className="hint"
 const history=$("tradeHistory");history.replaceChildren();for(const t of trades.slice(0,10)){const line=document.createElement("div");line.className="activity-row";const info=document.createElement("div"),b=document.createElement("b"),date=document.createElement("small"),amount=document.createElement("strong");b.textContent=(t.side==="buy"?"Virtual buy":"Virtual sell")+" · "+t.symbol;date.textContent=t.qty+" shares · "+(typeof t.date==="string"?t.date:"Practice order");amount.textContent=eur(t.amount);info.append(b,date);line.append(info,amount);history.append(line);}
 if(!history.children.length){const p=document.createElement("p");p.className="hint";p.textContent="Your simulated orders will appear here.";history.append(p)}
 $("tradeAvailable").textContent="Virtual cash available: "+eur(cash);
+const biggest=companies.reduce((best,c)=>Math.max(best,(positions[c.symbol]||0)*c.price),0);
+const sectors=new Set(companies.filter(c=>positions[c.symbol]>0).map(c=>c.sector));
+$("concentration").textContent=invested>0?"Largest company: "+(biggest/invested*100).toFixed(1)+"% of invested shares · "+sectors.size+" industries. These example stocks do not represent a diversified portfolio. Cash is excluded from this percentage.":"Your allocation insights will appear after a practice trade.";
 }
 function estimate(){const c=companies.find(x=>x.symbol===$("tradeSymbol").value),qty=inputNumber("tradeQty",1,100000);
 $("tradeEstimate").textContent=c&&qty&&Number.isSafeInteger(qty)?eur(qty*c.price):"Enter a whole number of shares";}
@@ -79,7 +82,7 @@ cash=Math.round((cash+(side==="buy"?-amount:amount))*100)/100;const next=(positi
 trades.unshift({symbol:c.symbol,qty,amount,side,date:new Date().toLocaleString()});trades=trades.slice(0,30);persist();markStep("trade");renderPortfolio();
 message.textContent=(side==="buy"?"Virtual purchase":"Virtual sale")+" complete: "+qty+" "+c.symbol+" shares. No real money moved.";toast(message.textContent);}
 function calculate(){const a=inputNumber("initial",0,10000000),m=inputNumber("monthly",0,100000),rate=inputNumber("returnRate",-99,50),years=inputNumber("years",1,60);if([a,m,rate,years].some(x=>x===null)){ $("growthResult").textContent="Check your inputs";$("growthDetail").textContent="";return}
-let sum=a;const r=rate/1200,n=Math.round(years*12);for(let i=0;i<n;i++)sum=sum*(1+r)+m;const contributed=a+m*n;$("growthResult").textContent=eur(sum);$("growthDetail").textContent="Contributions: "+eur(contributed)+" · Illustrative gain/loss: "+eur(sum-contributed);}
+let sum=a;const r=(1+rate/100)**(1/12)-1,n=Math.round(years*12);for(let i=0;i<n;i++)sum=sum*(1+r)+m;const contributed=a+m*n;$("growthResult").textContent=eur(sum);$("growthDetail").textContent="Contributions: "+eur(contributed)+" · Illustrative gain/loss: "+eur(sum-contributed);}
 function fees(){const a=inputNumber("orderValue",1,100000000),f=inputNumber("orderFee",0,1000000),p=inputNumber("spread",0,100);if([a,f,p].some(x=>x===null)){$("feeResult").textContent="Check your inputs";$("feeDetail").textContent="";return}const cost=f+a*p/100;$("feeResult").textContent=eur(cost);$("feeDetail").textContent=(cost/a*100).toFixed(2)+"% of your example order";}
 function risk(){const a=inputNumber("riskAmount",0,10000000),p=inputNumber("riskDrop",0,100);if(a===null||p===null){$("riskValue").textContent="Check your inputs";$("riskLoss").textContent="";return}const loss=a*p/100;$("riskValue").textContent=eur(a-loss);$("riskLoss").textContent="Hypothetical loss: "+eur(loss)+" · This is not a prediction.";}
 for(const c of companies){const opt=document.createElement("option");opt.value=c.symbol;opt.textContent=c.name+" ("+c.symbol+")";$("tradeSymbol").append(opt);}

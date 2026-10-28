@@ -48,7 +48,7 @@ def fx_quote():
 @router.get("/snapshot")
 def snapshot():
     """All-or-nothing quote+FX snapshot, never silently substitute demo prices."""
-    if not API_KEY:
+    if not provider.API_KEY:
         raise HTTPException(503, "Configure a licensed Twelve Data API key to enable live-linked values.")
     # _cached is RLock-protected in a single process; reuses per-symbol cache.
     def gather():
