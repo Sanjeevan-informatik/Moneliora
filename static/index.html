@@ -8,6 +8,7 @@
   <title>Moneliora — Learn investing with confidence</title>
   <link rel="stylesheet" href="/static/styles.css">
   <script src="/static/app.js" defer></script>
+  <script src="/static/account.js" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to main content</a>
@@ -23,6 +24,7 @@
         <a href="#learn" data-nav="learn"><span aria-hidden="true">✧</span> Learning centre</a>
         <a href="#tools" data-nav="tools"><span aria-hidden="true">▤</span> Calculators</a>
         <a href="#consult" data-nav="consult"><span aria-hidden="true">◷</span> Get help</a>
+        <a href="#account" data-nav="account"><span aria-hidden="true">♙</span> My account</a>
       </nav>
       <div class="side-bottom">
         <div class="side-badge">● SIMULATION MODE</div>
@@ -159,6 +161,39 @@
         </div>
       </section>
 
+      <section id="account" aria-labelledby="accountTitle" class="page-section">
+        <div class="section-heading"><div><span class="eyebrow">OPTIONAL ACCOUNT</span><h2 id="accountTitle">Your Moneliora account</h2><p>Save a learning portfolio between visits and manage educational booking requests.</p></div></div>
+        <div id="accountLoggedOut" class="two-col">
+          <form id="registerForm" class="card"><h3>Create your account</h3><p class="hint">Use test credentials only on local development installations.</p>
+            <label class="field">Email<input name="email" type="email" autocomplete="email" maxlength="254" required></label>
+            <label class="field">Password (12+ characters)<input name="password" type="password" autocomplete="new-password" minlength="12" maxlength="128" required></label>
+            <button type="submit" class="button button-primary full">Create account</button></form>
+          <form id="loginForm" class="card"><h3>Welcome back</h3>
+            <label class="field">Email<input name="email" type="email" autocomplete="username" required></label>
+            <label class="field">Password<input name="password" type="password" autocomplete="current-password" required></label>
+            <label class="field">Authenticator code (if enabled)<input name="otp" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="6 digits"></label>
+            <button type="submit" class="button button-primary full">Sign in</button></form>
+        </div>
+        <div id="accountLoggedIn" class="card" hidden>
+          <div class="card-head"><div><h3>Signed in as <span id="accountEmail"></span></h3><p id="accountPlan" class="hint"></p></div><button id="logoutButton" class="button button-outline">Sign out</button></div>
+          <div class="button-row"><button id="saveState" class="button button-primary">Save practice portfolio</button><button id="loadState" class="button button-outline">Load saved portfolio</button></div>
+          <p class="hint">Cloud saves are snapshots of fictional practice data. Portfolio updates are not automatically synchronized.</p>
+          <div class="two-col">
+            <div><h3>Two-factor authentication</h3><div id="mfaSetup" class="button-row"><button id="enableMFA" class="button button-outline">Set up authenticator</button></div>
+              <p id="mfaSecret" class="hint"></p><label class="field">Authenticator code<input id="mfaCode" inputmode="numeric" maxlength="6" placeholder="6 digits"></label><button id="confirmMFA" class="button button-outline">Confirm setup</button>
+              <p class="hint">Keep your authenticator secret private. Account recovery is not implemented; do not rely on this demo for important data.</p>
+            </div>
+            <div><h3>Educational bookings</h3>
+              <form id="bookingForm"><label class="field">Topic<select name="topic"><option>Understanding investment platforms</option><option>Understanding ETFs and stocks</option><option>Broker fees and charges</option><option>Paper trading introduction</option></select></label>
+                <label class="field">Date<input id="bookingDate" name="preferred_date" type="date" required></label><label class="field">Preferred time (Berlin)<input name="preferred_time" type="time" min="08:00" max="20:59" required></label>
+                <label class="field">Question<input name="question" maxlength="500"></label><button class="button button-primary" type="submit">Request a session</button></form><div id="myBookings"></div>
+            </div>
+          </div>
+          <div class="button-row"><button id="premiumCheckout" class="button button-outline">See subscription checkout</button><span id="billingState" class="hint"></span></div>
+          <div id="adminPanel" hidden><h3>Booking administration</h3><div id="adminBookings"></div></div>
+        </div>
+        <p id="accountFeedback" role="status" class="form-feedback"></p>
+      </section>
       <section id="consult" aria-labelledby="consultTitle" class="page-section">
         <div class="section-heading"><div><span class="eyebrow">WE CAN EXPLAIN</span><h2 id="consultTitle">Ask for a learning session</h2><p>Questions about platforms, fees, ETFs or how a virtual order works?</p></div></div>
         <div class="two-col consult-grid">

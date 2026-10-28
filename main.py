@@ -10,6 +10,7 @@ import threading
 import time
 
 from fastapi import FastAPI, Header, HTTPException, Request
+from platform_features import router as platform_router
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, EmailStr, Field, field_validator
@@ -20,6 +21,7 @@ ADMIN_TOKEN = os.getenv("MONELIORA_ADMIN_TOKEN", "")
 ALLOWED_ORIGIN = os.getenv("MONELIORA_ORIGIN", "http://127.0.0.1:8000").rstrip("/")
 app = FastAPI(title="Moneliora", docs_url=None, redoc_url=None, openapi_url=None)
 app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
+app.include_router(platform_router)
 rate_lock = threading.Lock()
 requests_by_client: dict[str, list[float]] = {}
 CSP = ("default-src 'none'; script-src 'self'; style-src 'self'; "
@@ -77,6 +79,10 @@ async def security_headers(request: Request, call_next):
     # Also apply headers on rejected requests, not only successful responses.
     rejection = None
     if request.method in ("POST", "PUT", "PATCH", "DELETE"):
+        if request.url.path == "/api/billing/webhook":
+            response = await call_next(request)
+            response.headers.update(SECURITY_HEADERS)
+            return response
         origin = request.headers.get("origin")
         if origin is not None and origin.rstrip("/") != ALLOWED_ORIGIN:
             rejection = JSONResponse({"detail": "Origin not allowed"}, status_code=403)
