@@ -17,8 +17,10 @@ def test_public_demo_is_nontransactional(monkeypatch):
     assert h.json()["live_trading"] is False
     assert h.json()["payments_enabled"] is False
     for path in ("/api/auth/me", "/api/paypal/status", "/api/billing/status",
-                 "/api/quotes/status", "/api/market/status"):
+                 "/api/market/status"):
         assert client.get(path).status_code == 403
+    assert client.get("/api/quotes/status").status_code == 200
+    assert client.get("/api/quotes/snapshot").status_code == 503
     assert client.post("/api/auth/register", json={
         "email": "demo@example.org", "password": "temporary-test-password-12345"
     }).status_code == 403
