@@ -3,8 +3,11 @@
 A responsive investment **education and virtual-trading** web app. It is **not a broker** and does not accept deposits, execute securities trades, provide live market quotations or give personal investment advice.
 
 ## Features
-- Stock explorer with explicitly fictional teaching prices (not a live market feed)
-- €5,000 starting virtual portfolio with simulated buy/sell, positions and paper P/L (browser memory only; refresh resets)
+- Searchable stock explorer with sector filters, one-click virtual order preselection and explicitly fictional prices (not a live market feed)
+- Friendly guided onboarding, progress tracker, plain-language lessons, FAQ and quick quiz
+- Mobile-first layouts, semantic navigation, screen-reader announcements and keyboard focus states
+- Watchlist saved in browser localStorage and hypothetical downside calculator
+- €5,000 starting virtual portfolio with simulated buy/sell, positions and trade history (saved in browser localStorage; reset requires confirmation)
 - Compound growth calculator with monthly contributions and hypothetical positive/negative returns
 - Broker transaction cost calculator with order fees and estimated spread
 - Consultation-request form persisted in SQLite; requests are **not bookings**
@@ -44,10 +47,10 @@ curl -H "X-Admin-Token: <secret>" http://127.0.0.1:8000/api/admin/consultations
 - Rate limiting is in process; public deployment needs shared Redis/proxy limits, bot defenses, trusted ingress, strict request size limits and alerts.
 - Admin uses a static high-entropy secret, not MFA. Replace with managed identity and RBAC before handling real client volumes.
 - SQLite retention cleanup runs only after a new request. Add a scheduled deletion job and documented data subject processes.
-- No account registration, persistent investment portfolio, billing, real price API, payments or regulated trading.
+- No account registration, server-stored portfolios, billing, real price API, payments or regulated trading. Browser storage is device-local, not encrypted, and can be cleared by the browser.
 - No external penetration test, audited threat model, WAF, backups, consent versioning, legal texts, operational monitoring, or deployment validation.
 - HSTS depends on the incoming scheme; ensure correct HTTPS termination at the reverse proxy.
-- Market prices are deliberately fictional. Calculators do not account for full taxation or every trading cost.
+- Market prices are deliberately fictional and fixed (paper-trading gains or losses are not market-realistic). Calculators do not account for full taxation or every trading cost.
 - Check legal obligations in Germany including GDPR, Impressum, consumer protection and BaFin regulatory perimeter before release.
 
 ## Test
@@ -56,3 +59,40 @@ pytest -q
 ```
 
 Only publish after a full code review, environment-specific testing, independent security assessment and legal review.
+
+## New account and booking prototype (feature/accounts-bookings-integrations)
+- Email/password accounts with Argon2 hashes, HttpOnly session cookies, CSRF protection, account lockout and optional TOTP authenticator MFA.
+- Account-isolated demo portfolio snapshots, saved watchlists and recent paper trades.
+- Logged-in educational booking requests and self-service cancellation; admin approval interface (admin role must be assigned by a trusted operator, never through a public form).
+- Optional Twelve Data daily-history endpoint, currently limited to NVDA, MSFT, AAPL and TSLA in the provider's native USD units. It is not live and not connected to paper-trading demo prices.
+- Optional Stripe hosted subscription checkout with signed, idempotent webhook processing. Both providers require your own credentials and deployment settings.
+
+Add optional values in the hosting environment, **never commit credentials**:
+```text
+MONELIORA_TWELVE_DATA_KEY=
+MONELIORA_STRIPE_SECRET_KEY=
+MONELIORA_STRIPE_PRICE_ID=
+MONELIORA_STRIPE_WEBHOOK_SECRET=
+MONELIORA_PUBLIC_URL=https://your-domain.example
+MONELIORA_SECURE_COOKIES=true
+MONELIORA_ORIGIN=https://your-domain.example
+```
+
+**Before launch:** Enable HTTPS/TLS termination; configure managed database encryption, backups, email verification and password reset, safe MFA recovery, rate limiting shared across workers, anti-bot protection, email delivery, consent/privacy workflows, retention jobs, request-body enforcement at the proxy, observability, provider licensing, Stripe customer portal and financial/legal review. Stripe subscription handling is an integration scaffold, not a complete billing ledger; verify asynchronous payment handling, entitlement reconciliation and failed-payment behavior. The demo uses local SQLite and should not be entrusted with real customer data. Real orders and personalised investment advice remain disabled. Test using synthetic details only.
+
+
+## Quotes and charts (feature/market-quotes-charts)
+
+The **Market charts** page has latest-available quotes and 1D / 5D / 1M / 3M / 1Y close-price charts for AAPL, MSFT, NVDA, and TSLA.
+
+To enable the feature, set the server-side environment variable `MONELIORA_TWELVE_DATA_KEY` to an API key authorised for the selected market data. **Never put it in JavaScript, query strings visible to the browser, or GitHub secrets exposed to public workflows.** The server alone talks to Twelve Data. Without the key, users see an explicit unavailable state.
+
+- `GET /api/quotes/status`: available symbols, setup status and disclaimers.
+- `GET /api/quotes/latest/{symbol}`: latest provider quote (cached for 75 seconds).
+- `GET /api/quotes/chart/{symbol}?range=1M`: historical closing prices (cached according to timeframe).
+- The browser polls the quote every 75 seconds only while visible, and redraws the historical chart on selection changes.
+- Chart values use provider-native **USD**. The separate practice portfolio continues using **fictional EUR** example prices. Market feed never controls virtual buy/sell prices.
+- **Not guaranteed real-time:** exchange licensing, feed entitlements, provider-plan delay, exchange sessions, credit limits and quote timestamps determine actual freshness. The UI never fabricates prices when the provider is not configured.
+- For public commercial display, independently confirm Twelve Data's exchange-specific commercial display/redistribution rights, pricing and rate limits. A consumer API key alone may not permit redistribution to your web visitors.
+
+Run `node --check static/market.js` and `pytest -q` before merging.
