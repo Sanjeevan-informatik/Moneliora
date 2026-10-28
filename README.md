@@ -3,8 +3,11 @@
 A responsive investment **education and virtual-trading** web app. It is **not a broker** and does not accept deposits, execute securities trades, provide live market quotations or give personal investment advice.
 
 ## Features
-- Stock explorer with explicitly fictional teaching prices (not a live market feed)
-- €5,000 starting virtual portfolio with simulated buy/sell, positions and paper P/L (browser memory only; refresh resets)
+- Searchable stock explorer with sector filters, one-click virtual order preselection and explicitly fictional prices (not a live market feed)
+- Friendly guided onboarding, progress tracker, plain-language lessons, FAQ and quick quiz
+- Mobile-first layouts, semantic navigation, screen-reader announcements and keyboard focus states
+- Watchlist saved in browser localStorage and hypothetical downside calculator
+- €5,000 starting virtual portfolio with simulated buy/sell, positions and trade history (saved in browser localStorage; reset requires confirmation)
 - Compound growth calculator with monthly contributions and hypothetical positive/negative returns
 - Broker transaction cost calculator with order fees and estimated spread
 - Consultation-request form persisted in SQLite; requests are **not bookings**
@@ -44,10 +47,10 @@ curl -H "X-Admin-Token: <secret>" http://127.0.0.1:8000/api/admin/consultations
 - Rate limiting is in process; public deployment needs shared Redis/proxy limits, bot defenses, trusted ingress, strict request size limits and alerts.
 - Admin uses a static high-entropy secret, not MFA. Replace with managed identity and RBAC before handling real client volumes.
 - SQLite retention cleanup runs only after a new request. Add a scheduled deletion job and documented data subject processes.
-- No account registration, persistent investment portfolio, billing, real price API, payments or regulated trading.
+- No account registration, server-stored portfolios, billing, real price API, payments or regulated trading. Browser storage is device-local, not encrypted, and can be cleared by the browser.
 - No external penetration test, audited threat model, WAF, backups, consent versioning, legal texts, operational monitoring, or deployment validation.
 - HSTS depends on the incoming scheme; ensure correct HTTPS termination at the reverse proxy.
-- Market prices are deliberately fictional. Calculators do not account for full taxation or every trading cost.
+- Market prices are deliberately fictional and fixed (paper-trading gains or losses are not market-realistic). Calculators do not account for full taxation or every trading cost.
 - Check legal obligations in Germany including GDPR, Impressum, consumer protection and BaFin regulatory perimeter before release.
 
 ## Test
