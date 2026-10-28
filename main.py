@@ -5,11 +5,9 @@ from datetime import date, datetime, timedelta, timezone
 import hmac
 import os
 from pathlib import Path
-import secrets
 import sqlite3
 import threading
 import time
-from urllib.parse import urlsplit
 
 from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
@@ -48,6 +46,8 @@ class Consultation(BaseModel):
     message: str = Field(default="", max_length=1200)
     privacy_accepted: bool
 
+    model_config = {"extra": "forbid"}
+
     @field_validator("name", "topic", "message")
     @classmethod
     def clean_text(cls, v: str):
@@ -63,23 +63,38 @@ class Consultation(BaseModel):
             raise ValueError("Date must be within the next 180 days")
         return v
 
+SECURITY_HEADERS = {
+    "Content-Security-Policy": CSP,
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "no-referrer",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+    "Cache-Control": "no-store",
+}
+
 @app.middleware("http")
 async def security_headers(request: Request, call_next):
+    # Also apply headers on rejected requests, not only successful responses.
+    rejection = None
     if request.method in ("POST", "PUT", "PATCH", "DELETE"):
         origin = request.headers.get("origin")
         if origin is not None and origin.rstrip("/") != ALLOWED_ORIGIN:
-            return JSONResponse({"detail": "Origin not allowed"}, status_code=403)
-        if request.headers.get("content-type", "").split(";")[0].strip() != "application/json":
-            return JSONResponse({"detail": "JSON required"}, status_code=415)
-    response = await call_next(request)
-    response.headers.update({
-        "Content-Security-Policy": CSP,
-        "X-Content-Type-Options": "nosniff",
-        "X-Frame-Options": "DENY",
-        "Referrer-Policy": "no-referrer",
-        "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
-        "Cache-Control": "no-store",
-    })
+            rejection = JSONResponse({"detail": "Origin not allowed"}, status_code=403)
+        # A bodyless DELETE does not need a content type.
+        elif request.method in ("POST", "PUT", "PATCH"):
+            if request.headers.get("content-type", "").split(";")[0].strip() != "application/json":
+                rejection = JSONResponse({"detail": "JSON required"}, status_code=415)
+        if rejection is None:
+            length = request.headers.get("content-length")
+            if length:
+                try:
+                    too_large = int(length) > 4096
+                except ValueError:
+                    too_large = True
+                if too_large:
+                    rejection = JSONResponse({"detail": "Request too large"}, status_code=413)
+    response = rejection if rejection is not None else await call_next(request)
+    response.headers.update(SECURITY_HEADERS)
     if request.url.scheme == "https":
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     return response
