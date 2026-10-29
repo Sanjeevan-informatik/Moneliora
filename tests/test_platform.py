@@ -6,7 +6,7 @@ os.environ["MONELIORA_DB"]=str(Path(tempfile.mkdtemp())/"accounts.db")
 os.environ["MONELIORA_ADMIN_TOKEN"]="a"*64
 from fastapi.testclient import TestClient
 from main import app
-from platform_features import db_conn
+from moneliora.accounts import db_conn
 client=TestClient(app)
 
 def test_register_auth_csrf_portfolio_bookings_and_logout():

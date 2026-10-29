@@ -1,0 +1,11 @@
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const {model}=require('../static/launch-model.js');
+const p={price:49,vat:0,refund:5,feePercent:3,feeFixed:.3,delivery:2,hours:1,hourly:25,capacity:4,acquisitionHours:2,visitors:100,leadRate:10,closeRate:20,marketing:0,fixed:20};
+const close=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
+test('scenario deducts fees, refunds, delivery and acquisition labor',()=>{const r=model(p);assert.equal(r.orders,2);close(r.contribution,17.78);close(r.profit,-34.44);assert.equal(r.breakEven,4);});
+test('sales cannot exceed fulfillment capacity',()=>{const r=model({...p,visitors:10000});assert.equal(r.orders,4);assert.equal(r.unserved,196);});
+test('zero audience has undefined CAC and no claimed revenue',()=>{const r=model({...p,visitors:0,marketing:20});assert.equal(r.cac,null);assert.equal(r.gross,0);assert.equal(r.profit,-90);});
+test('VAT-inclusive customer price converts to net revenue',()=>{const r=model({...p,price:119,vat:19,refund:0,feePercent:0,feeFixed:0,delivery:0,hourly:0});close(r.netRevenue,200);});
+test('full refunds still incur nonrefundable fees and labor',()=>{const r=model({...p,refund:100});assert.equal(r.netRevenue,0);assert.ok(r.contribution<0);assert.equal(r.breakEven,null);});
+test('invalid rates and impossible time budgets are rejected',()=>{for(const change of [{price:0},{visitors:1.5},{leadRate:101},{capacity:48,acquisitionHours:1},{refund:NaN}])assert.throws(()=>model({...p,...change}),RangeError);});

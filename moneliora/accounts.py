@@ -21,7 +21,7 @@ from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Query, Re
 from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 
 router = APIRouter()
-DB = Path(os.getenv("MONELIORA_DB", str(Path(__file__).resolve().parent / "data" / "moneliora.db")))
+DB = Path(os.getenv("MONELIORA_DB", str(Path(__file__).resolve().parents[1] / "data" / "moneliora.db")))
 COOKIE_SECURE = os.getenv("MONELIORA_SECURE_COOKIES", "false").lower() == "true"
 MARKET_API_KEY = os.getenv("MONELIORA_TWELVE_DATA_KEY", "")
 STRIPE_SECRET = os.getenv("MONELIORA_STRIPE_SECRET_KEY", "")

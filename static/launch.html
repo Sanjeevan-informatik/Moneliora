@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Launch lab — Moneliora</title>
+<link rel="stylesheet" href="/static/site.css">
+<link rel="stylesheet" href="/static/launch.css">
+<script src="/static/launch-model.js" defer>
+</script>
+<script src="/static/launch.js" defer>
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+<a class="wordmark" href="/">moneliora.</a>
+<nav aria-label="Main navigation">
+<a href="/">Public website</a>
+<a class="button small" href="/studio#business">Business lab ↗</a>
+</nav>
+</header>
+<main id="main" class="section-wrap section-space">
+<p class="eyebrow">A SMALL EXPERIMENT. A REAL DECISION.</p>
+<h1>The 48-hour launch lab.</h1>
+<p class="intro">Test an offer, understand its economics and decide what to do next. This is a planning tool—not an earnings promise, customer dashboard or record of actual sales.</p>
+<div class="launch-banner">The initial model uses unvalidated assumptions. Replace them with evidence. An inquiry is not a sale; payment and delivery happen only through a separate, confirmed agreement.</div>
+<div class="launch-layout">
+<form id="launchForm" class="launch-card" novalidate>
+<h2>What must be true?</h2>
+<p>Every figure covers the same 48-hour period. Payment fees and VAT are editable assumptions, not provider quotes or tax guidance.</p>
+<div class="input-grid">
+<label>Customer price, including assumed VAT (€)<input id="launch-price" name="price" type="number" min="1" max="100000" step="0.01" value="49" required>
+</label>
+<label>Assumed VAT (%) — enter your applicable rate<input id="launch-vat" name="vat" type="number" min="0" max="50" step="0.1" value="0" required>
+</label>
+<label>Assumed refunds (%)<input id="launch-refund" name="refund" type="number" min="0" max="100" step="0.1" value="5" required>
+</label>
+<label>Payment fee (%)<input id="launch-feePercent" name="feePercent" type="number" min="0" max="20" step="0.1" value="3" required>
+</label>
+<label>Fixed payment fee / sale (€)<input id="launch-feeFixed" name="feeFixed" type="number" min="0" max="100" step="0.01" value="0.3" required>
+</label>
+<label>Other delivery cost / sale (€)<input id="launch-delivery" name="delivery" type="number" min="0" max="100000" step="0.01" value="2" required>
+</label>
+<label>Delivery + preparation hours / sale<input id="launch-hours" name="hours" type="number" min="0.25" max="100" step="0.25" value="1" required>
+</label>
+<label>Value of your time (€ / hour)<input id="launch-hourly" name="hourly" type="number" min="0" max="10000" step="0.01" value="25" required>
+</label>
+<label>Available delivery hours over 48 hours<input id="launch-capacity" name="capacity" type="number" min="0" max="48" step="0.25" value="4" required>
+</label>
+<label>Acquisition / preparation hours outside delivery<input id="launch-acquisitionHours" name="acquisitionHours" type="number" min="0" max="48" step="0.25" value="2" required></label>
+<label>Qualified visits over 48 hours<input id="launch-visitors" name="visitors" type="number" min="0" max="10000000" step="1" value="100" required>
+</label>
+<label>Visits becoming inquiries (%)<input id="launch-leadRate" name="leadRate" type="number" min="0" max="100" step="0.1" value="10" required>
+</label>
+<label>Inquiries becoming sales (%)<input id="launch-closeRate" name="closeRate" type="number" min="0" max="100" step="0.1" value="20" required>
+</label>
+<label>Acquisition spend over 48 hours (€)<input id="launch-marketing" name="marketing" type="number" min="0" max="10000000" step="0.01" value="0" required>
+</label>
+<label>Other fixed launch costs (€)<input id="launch-fixed" name="fixed" type="number" min="0" max="10000000" step="0.01" value="20" required>
+</label>
+</div>
+</form>
+<aside class="launch-card launch-results" aria-label="Launch scenario results">
+<p class="eyebrow">ASSUMPTIONS → OUTCOMES</p>
+<h2>Your experiment<br>in numbers.</h2>
+<div id="launchResults" role="status">
+</div>
+<div id="launchDecision" class="launch-banner">
+</div>
+<p class="model-note">Orders = the smaller of modelled demand and delivery capacity, rounded down. Contribution deducts assumed refunds, VAT, payment fees, delivery costs and your time. Result then deducts acquisition spend, acquisition time at your hourly rate and fixed costs. Income tax, cancellations beyond the refund assumption and cash timing are excluded.</p>
+<button id="launchExport" class="button outline" type="button">Export experiment brief</button>
+</aside>
+</div>
+<section class="launch-card checklist">
+<div class="section-heading">
+<p class="eyebrow">FROM BUILDING TO LEARNING</p>
+<h2>Your next two days.</h2>
+<p id="launchProgress" role="status">0 of 8 actions complete</p>
+</div>
+<div class="task-grid">
+<label class="launch-task">
+<input type="checkbox" data-task="scope">
+<span>
+<b>01 / Define one customer and one problem</b>
+<small>Start with learners who need help interpreting their cash flow, or solo founders testing one offer. Do not target everyone.</small>
+</span>
+</label>
+<label class="launch-task">
+<input type="checkbox" data-task="evidence">
+<span>
+<b>02 / Speak with 5 potential customers</b>
+<small>Ask about the last time they faced the problem, what they tried and whether they have paid to solve it. Record anonymised patterns, not contact details here.</small>
+</span>
+</label>
+<label class="launch-task">
+<input type="checkbox" data-task="price">
+<span>
+<b>03 / Test the willingness to pay</b>
+<small>Present a concrete session scope and a price hypothesis. A compliment or an email address is not a purchase.</small>
+</span>
+</label>
+<label class="launch-task">
+<input type="checkbox" data-task="delivery">
+<span>
+<b>04 / Rehearse the session and worksheet</b>
+<small>Run a dry session with synthetic figures. Check that you can deliver the scope within the time budget.</small>
+</span>
+</label>
+<label class="launch-task">
+<input type="checkbox" data-task="operator">
+<span>
+<b>05 / Prepare the operator setup</b>
+<small>Confirm your seller details, privacy notice, terms, available session slots and a way to agree scope and payment. Keep requests closed until ready.</small>
+</span>
+</label>
+<label class="launch-task">
+<input type="checkbox" data-task="channel">
+<span>
+<b>06 / Choose one permission-based channel</b>
+<small>Share the free tool with a relevant community only if its rules permit it, or speak with existing contacts. No automated outreach is sent by this app.</small>
+</span>
+</label>
+<label class="launch-task">
+<input type="checkbox" data-task="followup">
+<span>
+<b>07 / Respond to genuine inquiries</b>
+<small>Explain exactly what is included, confirm availability and final price, and only mark a session completed after it was delivered.</small>
+</span>
+</label>
+<label class="launch-task">
+<input type="checkbox" data-task="decision">
+<span>
+<b>08 / Review evidence and decide</b>
+<small>Compare inquiries, agreed paid work, delivery time and contribution. Continue, change the offer, or stop based on observed evidence, not the model alone.</small>
+</span>
+</label>
+</div>
+<div class="actions">
+<button id="launchSave" class="button">Save progress on this device</button>
+<button id="launchClear" class="button outline">Clear saved progress</button>
+</div>
+<p id="launchStorage" role="status">Nothing is saved automatically. No customer information belongs in this tool.</p>
+</section>
+<section class="launch-card">
+<p class="eyebrow">THE OFFER TO VALIDATE FIRST</p>
+<h2>Free utility → paid guidance → repeatable delivery.</h2>
+<p>Keep the calculators free to demonstrate value. Test a bounded educational session with a concrete worksheet. Consider recurring products only after observing repeat demand and enough margin to fund support.</p>
+<p>The proposed €49 and €99 prices are hypotheses. Compare the price customers accept against the full cost of delivery; your own time is a cost.</p>
+<p class="model-note">References: <a href="https://www.sba.gov/business-guide/plan-your-business/market-research-competitive-analysis">SBA market research</a> and <a href="https://www.existenzgruendungsportal.de/_noch_neu_einordnen/DE/Gruendung-vorbereiten/Gruendungswissen/Marketing/Preisgestaltung/inhalt">German business-startup pricing guidance</a>. This workflow is a proposed experiment, not evidence that the offer has demand.</p>
+</section>
+</main>
+<footer class="site-footer section-wrap">
+<a href="/">← Back to Moneliora</a>
+<p>No guaranteed revenue. No payments or outreach are initiated by this tool.</p>
+</footer>
+</body>
+</html>

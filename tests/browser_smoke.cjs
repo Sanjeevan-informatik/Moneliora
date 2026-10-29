@@ -8,7 +8,7 @@ const {chromium} = require('playwright');
   try {
     const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];
     page.on('pageerror',e=>errors.push(e.message));
-    await page.goto(process.env.MONELIORA_TEST_URL||'http://127.0.0.1:8000');
+    await page.goto(process.env.MONELIORA_TEST_URL||'http://127.0.0.1:8000/studio');
     await page.locator('#marketCards .market-card').first().waitFor();
     assert.equal(await page.locator('#marketCards .market-card').count(),9);
     await page.locator('#stockSearch').fill('Apple');

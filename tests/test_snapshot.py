@@ -1,8 +1,8 @@
 """Snapshot regression checks; no real provider calls."""
 from unittest.mock import patch
 from fastapi.testclient import TestClient
-import market_data
-import market_snapshot
+import moneliora.integrations.market_data as market_data
+import moneliora.integrations.market_snapshot as market_snapshot
 from main import app
 
 client = TestClient(app)

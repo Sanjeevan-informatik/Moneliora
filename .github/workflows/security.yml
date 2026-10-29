@@ -17,7 +17,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test tests/finance.test.cjs
+      - run: node --test tests/*.test.cjs
+      - run: node --check static/operator.js
+      - run: node --check static/landing.js
+      - run: node --check static/launch.js
+      - run: node --check static/launch-model.js
+      - run: node --check static/workbook.js
       - run: node --check static/finance.js
       - run: node --check static/planner.js
       - run: node --check static/live_portfolio.js

@@ -1,11 +1,15 @@
-"""Each test gets a disposable database, independent of import order or local data."""
+"""Each test gets disposable data and isolated application settings."""
+from dataclasses import replace
 import pytest
 
 @pytest.fixture(autouse=True)
 def isolated_database(tmp_path, monkeypatch):
-    import main
-    import platform_features
+    from main import app
+    import moneliora.accounts as accounts
+    from moneliora.routes import consultations, pilot
     database = tmp_path / 'test.db'
-    monkeypatch.setattr(main, 'DB', database)
-    monkeypatch.setattr(platform_features, 'DB', database)
-    main.requests_by_client.clear()
+    monkeypatch.setitem(app.state._state, 'settings', replace(app.state.settings, database=database, admin_token='a'*64, public_preview=False, pilot_only=False, pilot_enabled=False))
+    monkeypatch.setattr(accounts, 'DB', database)
+    consultations.requests_by_client.clear()
+    pilot.HITS.clear()
+    accounts.AUTH_ATTEMPTS.clear()

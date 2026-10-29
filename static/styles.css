@@ -37,3 +37,4 @@ input[aria-invalid=true]{border-color:#ac4040;background:#fff7f5}
 @media(max-width:760px){.sidebar{overflow:visible}.planner-toolbar{padding:16px}.planner-toolbar .button{flex:1}.scenario-table td,.scenario-table th{padding:12px 8px}}
 /* Keep the preview notice from covering anchor destinations on small screens. */
 .preview-banner{position:relative}
+.sidebar>.text-link{color:#b9e6d7;padding:10px 12px}
