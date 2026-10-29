@@ -2,6 +2,21 @@
 
 A responsive investment **education and virtual-trading** web app. It is **not a broker** and does not accept deposits, execute securities trades, provide live market quotations or give personal investment advice.
 
+## Live demo
+
+**[Open the Moneliora live demo](https://moneliora-live-demo.sanjeevanvive.chatgpt.site)** — hosted privately for the owner's signed-in ChatGPT account.
+
+Try the money planner, virtual portfolio, business and launch calculators, printable action worksheet, and operator dashboard with fictional sample inquiries. Customer accounts, session requests, live market feeds and payments are not connected. Optional saved plans stay in the browser and are unencrypted.
+
+The demo is a static export of the application; GitHub merges do not automatically redeploy it. To build a fresh export, use an empty output directory outside this repository:
+
+```bash
+python scripts/build_demo.py /absolute/path/to/moneliora-demo
+python -m pytest -q tests/test_demo_export.py
+```
+
+See [hosted demo maintenance](docs/HOSTED_DEMO.md) for routes, verification and deployment details.
+
 ## Features
 - Searchable stock explorer with sector filters, one-click virtual order preselection and explicitly fictional prices (not a live market feed)
 - Friendly guided onboarding, progress tracker, plain-language lessons, FAQ and quick quiz
