@@ -17,7 +17,7 @@ import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import BaseModel
 
-from platform_features import csrf_guard, session_auth, db_conn, now_iso, PUBLIC_URL, recompute_membership
+from moneliora.accounts import csrf_guard, session_auth, db_conn, now_iso, PUBLIC_URL, recompute_membership
 
 router = APIRouter(prefix="/api/paypal", tags=["PayPal subscriptions"])
 MODE = os.getenv("MONELIORA_PAYPAL_MODE", "sandbox").lower()

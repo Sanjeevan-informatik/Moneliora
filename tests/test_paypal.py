@@ -4,8 +4,8 @@ from unittest.mock import patch
 import pytest
 from fastapi.testclient import TestClient
 from main import app
-import paypal_billing as paypal
-from platform_features import db_conn
+import moneliora.integrations.paypal as paypal
+from moneliora.accounts import db_conn
 
 client=TestClient(app)
 

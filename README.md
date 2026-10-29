@@ -26,7 +26,7 @@ pip install -r requirements.txt
 uvicorn main:app --host 127.0.0.1 --port 8000
 ```
 
-Open http://127.0.0.1:8000 . For public hosting, set `MONELIORA_ORIGIN` to the public HTTPS origin and generate `MONELIORA_ADMIN_TOKEN` as a long random secret **outside source control**. Never expose it to the browser or put it in URLs. Configure persistent encrypted storage, secure backups and trusted reverse-proxy networking.
+Open http://127.0.0.1:8000 for the public website, `/studio` for the free tools, or `/launch` for the 48-hour experiment lab. For public hosting, set `MONELIORA_ORIGIN` to the public HTTPS origin and generate `MONELIORA_ADMIN_TOKEN` as a long random secret **outside source control**. Never expose it to the browser or put it in URLs. Configure persistent encrypted storage, secure backups and trusted reverse-proxy networking.
 
 Example admin call (local administrator only):
 
@@ -47,7 +47,7 @@ curl -H "X-Admin-Token: <secret>" http://127.0.0.1:8000/api/admin/consultations
 - Rate limiting is in process; public deployment needs shared Redis/proxy limits, bot defenses, trusted ingress, strict request size limits and alerts.
 - Admin uses a static high-entropy secret, not MFA. Replace with managed identity and RBAC before handling real client volumes.
 - SQLite retention cleanup runs only after a new request. Add a scheduled deletion job and documented data subject processes.
-- No account registration, server-stored portfolios, billing, real price API, payments or regulated trading. Browser storage is device-local, not encrypted, and can be cleared by the browser.
+- Accounts, server-stored snapshots, quotes and billing exist as optional prototypes described below; public preview blocks customer APIs. Browser storage remains device-local and unencrypted. Real securities trading is never available.
 - No external penetration test, audited threat model, WAF, backups, consent versioning, legal texts, operational monitoring, or deployment validation.
 - HSTS depends on the incoming scheme; ensure correct HTTPS termination at the reverse proxy.
 - Market prices are deliberately fictional and fixed (paper-trading gains or losses are not market-realistic). Calculators do not account for full taxation or every trading cost.
@@ -112,9 +112,9 @@ Customers must sign in. They can choose Premium or Pro, approve the displayed pr
 - Confirm tax/VAT and consumer withdrawal rules, subscription terms and all existing GDPR/security requirements before collecting real payments.
 
 ## Public educational preview deployment
-A safe demo deployment blueprint is provided in `render.yaml`. It sets `MONELIORA_PUBLIC_PREVIEW=true`, which **disables every API except the health endpoint** and hides account, consultation, market-data and payment screens. All visible stock prices remain fictional and portfolio state is kept only in the visitor's browser.
+A safe demo deployment blueprint is provided in `render.yaml`. It sets `MONELIORA_PUBLIC_PREVIEW=true`, which **blocks customer and billing APIs while allowing health, the offer catalog and optional quote status/snapshot reads** and hides account, consultation, market-data and payment screens. All visible stock prices remain fictional and portfolio state is kept only in the visitor's browser.
 
-Connect the GitHub repository to a hosting provider, select the `feature/public-preview-deployment` branch and deploy using the Render Blueprint (or manually configure equivalent Python runtime, build and start commands). The branch must be merged before auto-deployment from `main`. Set `MONELIORA_PUBLIC_PREVIEW=true` at the host; never upload payment or stock API keys to the preview environment. HTTPS is required for public serving. Render free-tier storage is ephemeral; the public demo intentionally does not persist server-side customer data.
+Connect the GitHub repository to a hosting provider, select the `main` branch after the relevant reviewed changes are merged and deploy using the Render Blueprint (or manually configure equivalent Python runtime, build and start commands). Changes on feature branches are not deployed until merged and the host deploys the new commit. Set `MONELIORA_PUBLIC_PREVIEW=true` at the host; never upload payment or stock API keys to the preview environment. HTTPS is required for public serving. Render free-tier storage is ephemeral; the public demo intentionally does not persist server-side customer data.
 
 **Do not turn off preview mode in production yet.** Real subscriptions, user registration and personal details require an external security review, verified merchant accounts, database migrations, encrypted backups, legal notices, webhook replay testing, reconciled entitlements, account recovery and a production deployment review.
 
@@ -143,3 +143,19 @@ node --check static/finance.js
 Node 22+ is used in CI. Pure financial-model tests cover zero and negative returns, fee drag, inflation, invalid values, non-amortizing loans and nonpositive business margins. Python tests isolate databases and verify unique HTML IDs plus configured/unconfigured market snapshot behavior.
 
 Optional browser smoke test (with Playwright and its Chromium browser installed): start Uvicorn, then run `node tests/browser_smoke.cjs`. Set `MONELIORA_TEST_URL` to test another local port. It exercises explorer filtering, virtual trades, watchlists, planner validation, save/reload/delete, corrupt saved data, CSV downloads and desktop/mobile overflow.
+
+## Commercial foundation and modular application
+
+The public landing page is now separate from the studio. It presents free tools and two clearly labelled educational-session hypotheses, without fake testimonials or enabled checkout. The optional pilot flow collects consented interest, not bookings or payments, and remains disabled until explicitly configured.
+
+- `/`: public product site, availability-aware pilot buttons and optional request form.
+- `/studio`: existing planners, portfolio, learning and optional integrations.
+- `/operator`: token-protected request management; credentials stay only in tab memory.
+- `/launch`: a browser-only 48-hour validation checklist and unit-economics model, including delivery capacity and founder time.
+- `/static/workbook.html`: editable action worksheet with browser print/PDF support; fields are not saved.
+
+See [business model and 48-hour experiment](docs/BUSINESS_MODEL.md), [architecture](docs/ARCHITECTURE.md), and [pilot operations](docs/PILOT_OPERATIONS.md). Revenue within two days is not guaranteed. The default launch economics deliberately reveal a loss after valuing founder time.
+
+Run all calculation tests with `node --test tests/*.test.cjs`. The new backend package is `moneliora`; `uvicorn main:app` remains the deployment command. Existing account/provider configuration still loads from environment; see the architecture document for boundaries and remaining limits.
+
+For the optional new-page browser checks, run `node tests/commercial_browser.cjs` with a local server running. It checks unavailable catalog behavior, mocked pilot and operator UI flows, launch save/export/reset, worksheet print rendering, old hash-link compatibility and desktop/mobile overflow. Python tests separately exercise real pilot authorization and persistence. Pilot-only mode is recommended for the service experiment; it keeps legacy account and billing APIs blocked.

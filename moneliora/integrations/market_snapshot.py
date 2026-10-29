@@ -7,12 +7,12 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException
-from market_data import (
+from moneliora.integrations.market_data import (
     SYMBOLS, QUOTE_TTL, _cached, _provider_call, _valid_price,
     _as_of, latest,
 )
 
-import market_data as provider
+import moneliora.integrations.market_data as provider
 
 router = APIRouter(prefix="/api/quotes", tags=["market data"])
 SUPPORTED = tuple(SYMBOLS)

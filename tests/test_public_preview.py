@@ -1,12 +1,12 @@
-import main
+from dataclasses import replace
 from fastapi.testclient import TestClient
 from main import app
 
 client = TestClient(app)
 
 def test_public_demo_is_nontransactional(monkeypatch):
-    monkeypatch.setattr(main, "PUBLIC_PREVIEW", True)
-    r = client.get("/")
+    monkeypatch.setitem(app.state._state, "settings", replace(app.state.settings, public_preview=True))
+    r = client.get("/studio")
     assert r.status_code == 200
     assert "PUBLIC EDUCATIONAL PREVIEW" in r.text
     assert 'src="/static/account.js"' not in r.text
