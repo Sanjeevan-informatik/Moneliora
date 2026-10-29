@@ -1,176 +1,149 @@
 # Moneliora
 
-A responsive investment **education and virtual-trading** web app. It is **not a broker** and does not accept deposits, execute securities trades, provide live market quotations or give personal investment advice.
+**Financial planning, investment education, and business scenario modelling.**
+
+Explore your cash flow, compare savings goals, practise investing with virtual money, and test the numbers behind a business idea. Moneliora combines a responsive browser workspace with an optional FastAPI backend.
 
 ## Live demo
 
-**[Open the Moneliora live demo](https://moneliora-live-demo.sanjeevanvive.chatgpt.site)** — hosted privately for the owner's signed-in ChatGPT account.
+### [Open the Moneliora live demo →](https://moneliora-live-demo.sanjeevanvive.chatgpt.site)
 
-Try the money planner, virtual portfolio, business and launch calculators, printable action worksheet, and operator dashboard with fictional sample inquiries. Customer accounts, session requests, live market feeds and payments are not connected. Optional saved plans stay in the browser and are unencrypted.
+> **Access:** the hosted demo is private to the owner's signed-in ChatGPT account. Other visitors do not currently have public access.
 
-The demo is a static export of the application; GitHub merges do not automatically redeploy it. To build a fresh export, use an empty output directory outside this repository:
+Try the planners, virtual portfolio, launch lab, printable worksheet, and sample operator dashboard. The demo uses fictional stock prices and has no customer accounts, intake, bookings, or payments. Optional saved plans remain unencrypted in your browser.
+
+The demo is deployed separately from GitHub. Merging code does not automatically update the hosted version; see [demo maintenance](docs/HOSTED_DEMO.md).
+
+**Explore this repository:** [Features](#features) · [Quick start](#quick-start) · [Pages](#pages) · [Project structure](#project-structure) · [Development](#development) · [Deployment](#deployment) · [Documentation](#documentation)
+
+## Features
+
+| Workspace | What you can do |
+| --- | --- |
+| Money plan | Model monthly cash flow, cash-reserve coverage, and a reserve target. |
+| Savings goals | Compare three return assumptions after fees and inflation, with a chart, results table, and CSV export. |
+| Debt explorer | Compare repayment time and interest with extra payments; identify payments that do not reduce principal. |
+| Practice portfolio | Start with €5,000 in virtual cash, search and filter example companies, buy or sell virtual shares, and track holdings and concentration. |
+| Learning centre | Use plain-language lessons, FAQs, a knowledge check, and growth, transaction-cost, and downside calculators. |
+| Business lab | Explore contribution margin, break-even sales, cash runway, and a sales-reduction stress test. |
+| Launch lab | Model a 48-hour experiment with delivery capacity, founder time, acquisition costs, and an action checklist. |
+| Action worksheet | Turn a scenario into a next step and print or save it as a PDF through your browser. |
+
+The frontend includes responsive layouts, keyboard focus states, screen-reader announcements, and optional device-local saving. The hosted demo includes a fictional operator dashboard; real pilot intake and operator workflows require a separately configured backend.
+
+## Quick start
+
+You need **Git and Python 3.11+**. Node.js 22+ is used for JavaScript tests; the application does not require a frontend build step.
+
+```bash
+git clone https://github.com/Sanjeevan-informatik/Moneliora.git
+cd Moneliora
+```
+
+### Linux / macOS
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+export MONELIORA_PUBLIC_PREVIEW=true
+python -m uvicorn main:app --host 127.0.0.1 --port 8000
+```
+
+### Windows PowerShell
+
+```powershell
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+$env:MONELIORA_PUBLIC_PREVIEW = "true"
+python -m uvicorn main:app --host 127.0.0.1 --port 8000
+```
+
+Open **[http://127.0.0.1:8000](http://127.0.0.1:8000)**. These commands enable educational preview mode, which blocks customer and billing APIs. No payment or market-data credentials are needed.
+
+Settings are read from the process environment. [.env.example](.env.example) is a reference; copying it alone does not load its values. For other modes, follow the [deployment guide](docs/DEPLOYMENT.md).
+
+## Pages
+
+| Local route | Purpose |
+| --- | --- |
+| `/` | Product overview, free tools, and educational-session concepts. |
+| `/studio` | Planners, business lab, virtual portfolio, lessons, and calculators. |
+| `/launch` | Launch economics, validation checklist, and experiment export. |
+| `/static/workbook.html` | Editable action worksheet with browser print/PDF support. |
+| `/operator` | Protected pilot request management; locked in backend preview mode. |
+| `/api/health` | Application health endpoint. |
+
+The static live demo uses trailing slashes for `/studio/`, `/launch/`, and `/operator/`. Its operator page contains only fictional sample inquiries.
+
+## Project structure
+
+| Path | Responsibility |
+| --- | --- |
+| [main.py](main.py) | Stable application entry point for Uvicorn. |
+| [moneliora/application.py](moneliora/application.py) | FastAPI application and router assembly. |
+| [moneliora/settings.py](moneliora/settings.py), [middleware.py](moneliora/middleware.py) | Configuration, security headers, request controls, and preview restrictions. |
+| [moneliora/routes/](moneliora/routes/), [services/](moneliora/services/) | Pages, consultation requests, pilot APIs, and persistence. |
+| [moneliora/accounts.py](moneliora/accounts.py), [integrations/](moneliora/integrations/) | Optional account, booking, market-data, and payment prototypes. |
+| [static/](static/) | HTML, CSS, JavaScript, and browser-only calculation models. |
+| [scripts/build_demo.py](scripts/build_demo.py) | Allowlisted static export for the hosted demo. |
+| [tests/](tests/) | Python, JavaScript calculation, and browser regression checks. |
+| [docs/](docs/) | Architecture, business experiment, operations, and hosting guides. |
+
+See [architecture](docs/ARCHITECTURE.md) for module boundaries and remaining coupling.
+
+## Development
+
+Run the backend and calculation tests from the repository root:
+
+```bash
+python -m pytest -q
+node --test tests/*.test.cjs
+```
+
+The [CI workflow](.github/workflows/security.yml) also checks JavaScript syntax and audits Python dependencies. Tests cover financial edge cases, request validation, authorization, preview restrictions, pilot retention, provider mocks, and the static export.
+
+For optional browser checks, install Playwright and its Chromium browser, start the local application, then run:
+
+```bash
+node tests/browser_smoke.cjs
+node tests/commercial_browser.cjs
+```
+
+For another local port, set `MONELIORA_TEST_URL` to the full studio URL for `browser_smoke.cjs` (for example, `http://127.0.0.1:8001/studio`) and `MONELIORA_TEST_ORIGIN` to the origin for `commercial_browser.cjs` (`http://127.0.0.1:8001`). The suites cover planners, virtual trades, saved state, exports, pilot/operator UI states, worksheet printing, and desktop/mobile layouts.
+
+To create a static demo export, choose an **empty directory outside this repository**:
 
 ```bash
 python scripts/build_demo.py /absolute/path/to/moneliora-demo
 python -m pytest -q tests/test_demo_export.py
 ```
 
-See [hosted demo maintenance](docs/HOSTED_DEMO.md) for routes, verification and deployment details.
+Exporting does not deploy the site. Follow [hosted demo maintenance](docs/HOSTED_DEMO.md) to publish an update.
 
-## Features
-- Searchable stock explorer with sector filters, one-click virtual order preselection and explicitly fictional prices (not a live market feed)
-- Friendly guided onboarding, progress tracker, plain-language lessons, FAQ and quick quiz
-- Mobile-first layouts, semantic navigation, screen-reader announcements and keyboard focus states
-- Watchlist saved in browser localStorage and hypothetical downside calculator
-- €5,000 starting virtual portfolio with simulated buy/sell, positions and trade history (saved in browser localStorage; reset requires confirmation)
-- Compound growth calculator with monthly contributions and hypothetical positive/negative returns
-- Broker transaction cost calculator with order fees and estimated spread
-- Consultation-request form persisted in SQLite; requests are **not bookings**
-- Admin-only API for listing and deleting consultation requests
-- Responsive frontend, no third-party scripts, no analytics trackers
+## Deployment
 
-## Run locally
+| Mode | Scope | Guide |
+| --- | --- | --- |
+| Hosted static demo | Browser tools and fictional operator samples; no FastAPI backend or customer database. | [Hosted demo](docs/HOSTED_DEMO.md) |
+| FastAPI educational preview | Free tools with customer and billing APIs blocked by `MONELIORA_PUBLIC_PREVIEW=true`. | [Deployment](docs/DEPLOYMENT.md) and [Render blueprint](render.yaml) |
+| Configured pilot | Optional consented interest requests and protected operations; no checkout or verified revenue records. | [Pilot operations](docs/PILOT_OPERATIONS.md) |
+| Optional integrations | Account, booking, Twelve Data, Stripe, and PayPal prototypes requiring separate setup and validation. | [Integrations](docs/INTEGRATIONS.md) |
 
-Requires Python 3.11+.
+Moneliora is an educational prototype. It does not accept deposits, execute securities trades, or provide personal investment advice. The practice portfolio uses fixed fictional EUR prices; optional provider quotes are separate and are not guaranteed to be real-time. Calculator results are assumptions, not forecasts.
 
-```bash
-python -m venv .venv
-# Linux/macOS: source .venv/bin/activate
-# Windows PowerShell: .venv\\Scripts\\Activate.ps1
-pip install -r requirements.txt
-uvicorn main:app --host 127.0.0.1 --port 8000
-```
+The proposed €49 and €99 guided-session prices are research hypotheses. The [48-hour business experiment](docs/BUSINESS_MODEL.md) tests demand and costs; it does not promise revenue in two days.
 
-Open http://127.0.0.1:8000 for the public website, `/studio` for the free tools, or `/launch` for the 48-hour experiment lab. For public hosting, set `MONELIORA_ORIGIN` to the public HTTPS origin and generate `MONELIORA_ADMIN_TOKEN` as a long random secret **outside source control**. Never expose it to the browser or put it in URLs. Configure persistent encrypted storage, secure backups and trusted reverse-proxy networking.
+Browser saves are unencrypted. Before accepting real customer data or payments, address the documented identity, storage, rate-limiting, provider, privacy, and operational gaps in the [deployment guide](docs/DEPLOYMENT.md).
 
-Example admin call (local administrator only):
+## Documentation
 
-```bash
-curl -H "X-Admin-Token: <secret>" http://127.0.0.1:8000/api/admin/consultations
-```
-
-## Security posture
-- Strict CSP (no inline scripts/styles, third-party scripts or framing)
-- Secure response headers, restrictive referrer and permissions policies
-- Server-side validated request types/lengths and automatic 90-day deletion during consultation submission
-- Parameterized database queries and per-client rate limiting (single-process only)
-- Privileged API disabled unless admin secret is configured and at least 32 characters
-- Browser-only paper portfolio: no exchange orders, API keys or sensitive bank credentials
-- CI tests plus Python dependency auditing
-
-## Known limits — NOT production hardened yet
-- Rate limiting is in process; public deployment needs shared Redis/proxy limits, bot defenses, trusted ingress, strict request size limits and alerts.
-- Admin uses a static high-entropy secret, not MFA. Replace with managed identity and RBAC before handling real client volumes.
-- SQLite retention cleanup runs only after a new request. Add a scheduled deletion job and documented data subject processes.
-- Accounts, server-stored snapshots, quotes and billing exist as optional prototypes described below; public preview blocks customer APIs. Browser storage remains device-local and unencrypted. Real securities trading is never available.
-- No external penetration test, audited threat model, WAF, backups, consent versioning, legal texts, operational monitoring, or deployment validation.
-- HSTS depends on the incoming scheme; ensure correct HTTPS termination at the reverse proxy.
-- Market prices are deliberately fictional and fixed (paper-trading gains or losses are not market-realistic). Calculators do not account for full taxation or every trading cost.
-- Check legal obligations in Germany including GDPR, Impressum, consumer protection and BaFin regulatory perimeter before release.
-
-## Test
-```bash
-pytest -q
-```
-
-Only publish after a full code review, environment-specific testing, independent security assessment and legal review.
-
-## New account and booking prototype (feature/accounts-bookings-integrations)
-- Email/password accounts with Argon2 hashes, HttpOnly session cookies, CSRF protection, account lockout and optional TOTP authenticator MFA.
-- Account-isolated demo portfolio snapshots, saved watchlists and recent paper trades.
-- Logged-in educational booking requests and self-service cancellation; admin approval interface (admin role must be assigned by a trusted operator, never through a public form).
-- Optional Twelve Data daily-history endpoint, currently limited to NVDA, MSFT, AAPL and TSLA in the provider's native USD units. It is not live and not connected to paper-trading demo prices.
-- Optional Stripe hosted subscription checkout with signed, idempotent webhook processing. Both providers require your own credentials and deployment settings.
-
-Add optional values in the hosting environment, **never commit credentials**:
-```text
-MONELIORA_TWELVE_DATA_KEY=
-MONELIORA_STRIPE_SECRET_KEY=
-MONELIORA_STRIPE_PRICE_ID=
-MONELIORA_STRIPE_WEBHOOK_SECRET=
-MONELIORA_PUBLIC_URL=https://your-domain.example
-MONELIORA_SECURE_COOKIES=true
-MONELIORA_ORIGIN=https://your-domain.example
-```
-
-**Before launch:** Enable HTTPS/TLS termination; configure managed database encryption, backups, email verification and password reset, safe MFA recovery, rate limiting shared across workers, anti-bot protection, email delivery, consent/privacy workflows, retention jobs, request-body enforcement at the proxy, observability, provider licensing, Stripe customer portal and financial/legal review. Stripe subscription handling is an integration scaffold, not a complete billing ledger; verify asynchronous payment handling, entitlement reconciliation and failed-payment behavior. The demo uses local SQLite and should not be entrusted with real customer data. Real orders and personalised investment advice remain disabled. Test using synthetic details only.
-
-
-## Quotes and charts (feature/market-quotes-charts)
-
-The **Market charts** page has latest-available quotes and 1D / 5D / 1M / 3M / 1Y close-price charts for AAPL, MSFT, NVDA, and TSLA.
-
-To enable the feature, set the server-side environment variable `MONELIORA_TWELVE_DATA_KEY` to an API key authorised for the selected market data. **Never put it in JavaScript, query strings visible to the browser, or GitHub secrets exposed to public workflows.** The server alone talks to Twelve Data. Without the key, users see an explicit unavailable state.
-
-- `GET /api/quotes/status`: available symbols, setup status and disclaimers.
-- `GET /api/quotes/latest/{symbol}`: latest provider quote (cached for 75 seconds).
-- `GET /api/quotes/chart/{symbol}?range=1M`: historical closing prices (cached according to timeframe).
-- The browser polls the quote every 75 seconds only while visible, and redraws the historical chart on selection changes.
-- Chart values use provider-native **USD**. The separate practice portfolio continues using **fictional EUR** example prices. Market feed never controls virtual buy/sell prices.
-- **Not guaranteed real-time:** exchange licensing, feed entitlements, provider-plan delay, exchange sessions, credit limits and quote timestamps determine actual freshness. The UI never fabricates prices when the provider is not configured.
-- For public commercial display, independently confirm Twelve Data's exchange-specific commercial display/redistribution rights, pricing and rate limits. A consumer API key alone may not permit redistribution to your web visitors.
-
-Run `node --check static/market.js` and `pytest -q` before merging.
-
-
-## PayPal subscriptions (feature/paypal-subscriptions)
-
-PayPal is optional and **disabled until configured**. Configure a PayPal Business developer sandbox account, create a Product and recurring Billing Plans, set the PayPal client ID, secret and exact webhook ID in the server environment according to `.env.example`. Set webhook URL to `https://YOUR-DOMAIN/api/paypal/webhook` and subscribe it to subscription lifecycle events. For local tests, webhook delivery requires a secure publicly reachable development tunnel.
-
-Customers must sign in. They can choose Premium or Pro, approve the displayed price on PayPal, manually verify the actual provider status and cancel. The app does not create billing plans or set the price: the merchant's PayPal plan determines the amount and cadence. **Do not enable real payments without approved prices, legal terms and tests.** The client-side success return does **not** activate any entitlement; subscriptions are verified against PayPal using account-specific plan IDs and a unique checkout intent. Signed webhook notifications are checked with PayPal before reconciliation. Provider errors deliberately remain ambiguous and may require manual reconciliation. Existing Stripe subscriptions block PayPal checkouts and vice versa where known.
-
-### Operational and security gaps
-- First-party PayPal merchant configuration and webhook credentials are required; no keys included.
-- Sandbox tests simulate network responses and do not establish end-to-end PayPal certification. Run real sandbox approval, renewal, payment failure, refund, cancellation and webhook replay tests.
-- Subscription and webhook calls use SQLite; a production deployment needs durable queues, distributed locking, retries, manual reconciliation, alerts, support/return handling and refunds/chargebacks handling.
-- The PayPal environment defaults to sandbox. Live mode additionally requires HTTPS; all bank and billing details stay with PayPal.
-- Confirm tax/VAT and consumer withdrawal rules, subscription terms and all existing GDPR/security requirements before collecting real payments.
-
-## Public educational preview deployment
-A safe demo deployment blueprint is provided in `render.yaml`. It sets `MONELIORA_PUBLIC_PREVIEW=true`, which **blocks customer and billing APIs while allowing health, the offer catalog and optional quote status/snapshot reads** and hides account, consultation, market-data and payment screens. All visible stock prices remain fictional and portfolio state is kept only in the visitor's browser.
-
-Connect the GitHub repository to a hosting provider, select the `main` branch after the relevant reviewed changes are merged and deploy using the Render Blueprint (or manually configure equivalent Python runtime, build and start commands). Changes on feature branches are not deployed until merged and the host deploys the new commit. Set `MONELIORA_PUBLIC_PREVIEW=true` at the host; never upload payment or stock API keys to the preview environment. HTTPS is required for public serving. Render free-tier storage is ephemeral; the public demo intentionally does not persist server-side customer data.
-
-**Do not turn off preview mode in production yet.** Real subscriptions, user registration and personal details require an external security review, verified merchant accounts, database migrations, encrypted backups, legal notices, webhook replay testing, reconciled entitlements, account recovery and a production deployment review.
-
-## Money plan and business lab
-
-The public preview now includes a browser-only planning workspace:
-
-- Monthly cash flow, reserve coverage and a user-selected emergency reserve target.
-- Three adjustable goal scenarios, with effective annual returns, proportional annual fees, fixed month-end contributions and inflation-adjusted purchasing power. A chart, accessible end-value table and annual CSV export use the same calculation engine.
-- Debt payoff comparison with extra payments and explicit handling of payments that do not reduce principal.
-- Single-product business contribution margin, break-even units, operating cash runway and a 20% sales-reduction stress test.
-- Optional device-local saving and deletion. Inputs are not sent to the server; saved plans are unencrypted and accessible to anyone using the browser. Goal savings and cash reserves are separate inputs and should not double-count the same money.
-- Paper-portfolio concentration context, improved text contrast and scrollable desktop navigation.
-
-All example values are illustrative, not recommended allocations, market forecasts or tax advice. These tools do not establish investment suitability. Model assumptions and educational source links are available alongside the results. Existing accounts, billing and provider integrations retain their existing deployment restrictions.
-
-### Developer verification
-
-```bash
-python -m pytest -q
-node --test tests/finance.test.cjs
-node --check static/planner.js
-node --check static/finance.js
-```
-
-Node 22+ is used in CI. Pure financial-model tests cover zero and negative returns, fee drag, inflation, invalid values, non-amortizing loans and nonpositive business margins. Python tests isolate databases and verify unique HTML IDs plus configured/unconfigured market snapshot behavior.
-
-Optional browser smoke test (with Playwright and its Chromium browser installed): start Uvicorn, then run `node tests/browser_smoke.cjs`. Set `MONELIORA_TEST_URL` to test another local port. It exercises explorer filtering, virtual trades, watchlists, planner validation, save/reload/delete, corrupt saved data, CSV downloads and desktop/mobile overflow.
-
-## Commercial foundation and modular application
-
-The public landing page is now separate from the studio. It presents free tools and two clearly labelled educational-session hypotheses, without fake testimonials or enabled checkout. The optional pilot flow collects consented interest, not bookings or payments, and remains disabled until explicitly configured.
-
-- `/`: public product site, availability-aware pilot buttons and optional request form.
-- `/studio`: existing planners, portfolio, learning and optional integrations.
-- `/operator`: token-protected request management; credentials stay only in tab memory.
-- `/launch`: a browser-only 48-hour validation checklist and unit-economics model, including delivery capacity and founder time.
-- `/static/workbook.html`: editable action worksheet with browser print/PDF support; fields are not saved.
-
-See [business model and 48-hour experiment](docs/BUSINESS_MODEL.md), [architecture](docs/ARCHITECTURE.md), and [pilot operations](docs/PILOT_OPERATIONS.md). Revenue within two days is not guaranteed. The default launch economics deliberately reveal a loss after valuing founder time.
-
-Run all calculation tests with `node --test tests/*.test.cjs`. The new backend package is `moneliora`; `uvicorn main:app` remains the deployment command. Existing account/provider configuration still loads from environment; see the architecture document for boundaries and remaining limits.
-
-For the optional new-page browser checks, run `node tests/commercial_browser.cjs` with a local server running. It checks unavailable catalog behavior, mocked pilot and operator UI flows, launch save/export/reset, worksheet print rendering, old hash-link compatibility and desktop/mobile overflow. Python tests separately exercise real pilot authorization and persistence. Pilot-only mode is recommended for the service experiment; it keeps legacy account and billing APIs blocked.
+| Guide | Read it for |
+| --- | --- |
+| [Hosted demo](docs/HOSTED_DEMO.md) | Live URL, access, export contents, and publishing updates. |
+| [Architecture](docs/ARCHITECTURE.md) | Application entry points, module boundaries, and model/UI separation. |
+| [Business model](docs/BUSINESS_MODEL.md) | Offer hypotheses, economics, and the 48-hour validation plan. |
+| [Pilot operations](docs/PILOT_OPERATIONS.md) | Intake configuration, operator workflow, authorization, and retention. |
+| [Deployment](docs/DEPLOYMENT.md) | Hosting modes, environment setup, security controls, and production gaps. |
+| [Integrations](docs/INTEGRATIONS.md) | Optional accounts, bookings, market data, Stripe, and PayPal. |
