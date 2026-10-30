@@ -2,7 +2,7 @@
 from threading import Lock
 import time
 from typing import Literal
-from fastapi import APIRouter, Header, HTTPException, Request
+from fastapi import APIRouter, Header, HTTPException, Request, Query
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from moneliora.routes.consultations import require_admin
 from moneliora.services import pilot as service
@@ -71,9 +71,10 @@ def request_pilot(data: PilotInput, request: Request):
     return {'status': 'received', 'message': 'Interest recorded. This is not a booking or payment. No response time or availability is guaranteed.'}
 
 @router.get('/api/admin/pilot')
-def admin_list(request: Request, x_admin_token: str | None = Header(default=None)):
+def admin_list(request: Request, x_admin_token: str | None = Header(default=None),
+               limit:int=Query(100,ge=1,le=100), cursor:str | None=Query(None,max_length=256)):
     require_admin(request, x_admin_token)
-    return service.listing(request.app.state.settings.database)
+    return service.listing(request.app.state.settings.database, limit, cursor)
 
 @router.patch('/api/admin/pilot/{request_id}')
 def update(request_id: str, data: StageInput, request: Request, x_admin_token: str | None = Header(default=None)):

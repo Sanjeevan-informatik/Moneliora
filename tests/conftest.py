@@ -12,4 +12,3 @@ def isolated_database(tmp_path, monkeypatch):
     monkeypatch.setattr(accounts, 'DB', database)
     consultations.requests_by_client.clear()
     pilot.HITS.clear()
-    accounts.AUTH_ATTEMPTS.clear()

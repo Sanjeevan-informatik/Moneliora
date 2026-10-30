@@ -12,6 +12,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - run: python -m pip install --upgrade pip
       - run: python -m pip install -r requirements.txt
       - run: python -m pip install pip-audit
       - uses: actions/setup-node@v4
@@ -24,6 +25,7 @@ jobs:
       - run: node --check static/launch-model.js
       - run: node --check static/workbook.js
       - run: node --check static/finance.js
+      - run: node --check static/money.js
       - run: node --check static/planner.js
       - run: node --check static/live_portfolio.js
       - run: node --check static/app.js

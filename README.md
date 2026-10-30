@@ -104,6 +104,8 @@ node --test tests/*.test.cjs
 
 The [CI workflow](.github/workflows/security.yml) also checks JavaScript syntax and audits Python dependencies. Tests cover financial edge cases, request validation, authorization, preview restrictions, pilot retention, provider mocks, and the static export.
 
+The [security review](docs/SECURITY_HARDENING.md) documents authentication throttling and audits, session revocation, integer-cent snapshot migration, pagination, and SQLite concurrency behaviour.
+
 For optional browser checks, install Playwright and its Chromium browser, start the local application, then run:
 
 ```bash
@@ -147,3 +149,4 @@ Browser saves are unencrypted. Before accepting real customer data or payments, 
 | [Pilot operations](docs/PILOT_OPERATIONS.md) | Intake configuration, operator workflow, authorization, and retention. |
 | [Deployment](docs/DEPLOYMENT.md) | Hosting modes, environment setup, security controls, and production gaps. |
 | [Integrations](docs/INTEGRATIONS.md) | Optional accounts, bookings, market data, Stripe, and PayPal. |
+| [Security review](docs/SECURITY_HARDENING.md) | Verified findings, implemented controls, schema changes, and remaining limits. |

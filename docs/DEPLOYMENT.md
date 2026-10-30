@@ -38,7 +38,7 @@ For pilot intake, follow the complete [pilot operations configuration](PILOT_OPE
 ## Existing backend controls
 
 - Content Security Policy, restrictive framing, referrer and permissions policies, and security response headers.
-- Validated request types and lengths, parameterized database queries, bounded request-body reads, and in-process rate limiting.
+- Validated request types and lengths, parameterized database queries, bounded request-body reads, and shared SQLite authentication throttles. Consultation and pilot submission limits remain in-process.
 - Administrative API access disabled unless an adequately sized token is configured.
 - Account prototype with Argon2 password hashing, HttpOnly session cookies, CSRF controls, lockout, and optional authenticator MFA.
 - Preview and pilot-only policies that restrict which APIs can be reached.
@@ -49,6 +49,8 @@ These controls describe the FastAPI backend. The static demo has a separate host
 ## Retention and administration
 
 Legacy consultation requests use a 90-day retention cleanup triggered during submission. Pilot requests expire after 30 days; cleanup runs on creation and operator listing. To enforce pilot cleanup during quiet periods, schedule `python -m moneliora.maintenance` with the same database environment. That command does not clean up account or consultation records. No scheduled job is provisioned automatically.
+
+The maintenance command also prunes expired authentication throttle buckets and audit rows older than 30 days. SQLite connections use WAL on local storage; it permits concurrent readers but still serializes writers. See the [security review](SECURITY_HARDENING.md) for backup constraints, pagination and the integer-cent snapshot schema.
 
 Use the `X-Admin-Token` header for direct administrative API access. Never put a real token in query parameters, frontend source, browser localStorage, shared logs, or example commands. The pilot operator page holds its token only in tab memory. See [pilot operations](PILOT_OPERATIONS.md) for routes and stage meanings.
 

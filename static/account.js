@@ -35,14 +35,14 @@
  $("registerForm").addEventListener("submit",e=>{e.preventDefault();submitAuth(e.currentTarget,"/api/auth/register");});
  $("loginForm").addEventListener("submit",e=>{e.preventDefault();submitAuth(e.currentTarget,"/api/auth/login");});
  $("logoutButton").addEventListener("click",async()=>{
-   try{await post("/api/auth/logout",{});identity=null;show();feedback("Signed out.");}catch(e){feedback(e.message);}
+   try{await post("/api/auth/logout",{});identity=null;show();$("myBookings").replaceChildren();$("adminBookings").replaceChildren();$("mfaSecret").textContent='';feedback("Signed out.");}catch(e){feedback(e.message);}
  });
  $("saveState").addEventListener("click",async()=>{
   try{
    const paper=JSON.parse(localStorage.getItem("moneliora-paper-v3")||"null");
-   const saved=paper||{cash:5000,positions:{},trades:[]};
+   const saved=MonelioraMoney.snapshot(paper||{cash_cents:500000,positions:{},trades:[]});
    const watch=JSON.parse(localStorage.getItem("moneliora-watch-v1")||"[]");
-   await post("/api/account/state",{cash:saved.cash,positions:saved.positions||{},trades:saved.trades||[],watched:Array.isArray(watch)?watch:[]},"PUT");
+   await post("/api/account/state",{...saved,watched:Array.isArray(watch)?watch:[]},"PUT");
    feedback("Your demo portfolio snapshot was saved to your account.");
   }catch(e){feedback("Could not save: "+e.message);}
  });
@@ -53,7 +53,7 @@
     const confirmed=confirm("Replace your current local practice portfolio with the saved version? This will reload the page.");
     if(!confirmed)return;
     const s=result.state;
-    localStorage.setItem("moneliora-paper-v3",JSON.stringify({cash:s.cash,positions:s.positions,trades:s.trades}));
+    localStorage.setItem("moneliora-paper-v3",JSON.stringify(MonelioraMoney.snapshot(s)));
     localStorage.setItem("moneliora-watch-v1",JSON.stringify(s.watched));
     location.reload();
    }catch(e){feedback(e.message);}
@@ -66,7 +66,7 @@
   }catch(e){feedback(e.message);}
  });
  $("confirmMFA").addEventListener("click",async()=>{
-  try{await post("/api/auth/mfa/confirm",{code:$("mfaCode").value.trim()});identity.mfa_enabled=true;show();$("mfaSecret").textContent="MFA is enabled.";feedback("Authenticator enabled.");}
+  try{const r=await post("/api/auth/mfa/confirm",{code:$("mfaCode").value.trim()});identity.csrf=r.csrf;identity.mfa_enabled=true;show();$("mfaCode").value='';$("mfaSecret").textContent="MFA is enabled.";feedback("Authenticator enabled.");}
   catch(e){feedback(e.message);}
  });
  function dates(){const today=new Date(),after=new Date(today);after.setDate(after.getDate()+90);const local=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");$("bookingDate").min=local(today);$("bookingDate").max=local(after);}
@@ -77,11 +77,18 @@
    e.currentTarget.reset();feedback("Booking request received. It is not confirmed.");await loadBookings();}
   catch(err){feedback(err.message);}
  });
- async function loadBookings(){
+ function olderButton(node,cursor,load){
+   node.querySelector('[data-older]')?.remove();
+   if(cursor===null||cursor===undefined)return;
+   const button=document.createElement('button');button.type='button';button.className='button button-outline';button.dataset.older='true';button.textContent='Load older requests';
+   button.addEventListener('click',async()=>{button.disabled=true;try{await load(cursor);}catch(e){feedback(e.message);}finally{button.disabled=false;}});node.append(button);
+ }
+ async function loadBookings(cursor=null){
   if(!identity)return;
   try{
-   const result=await get("/api/bookings"),node=$("myBookings");node.replaceChildren();
-   const heading=document.createElement("h4");heading.textContent="My requests";node.append(heading);
+   const result=await get('/api/bookings'+(cursor?'?cursor='+encodeURIComponent(cursor):'')),node=$("myBookings");
+   if(!cursor){node.replaceChildren();const heading=document.createElement('h4');heading.textContent='My requests';node.append(heading);}
+   node.querySelector('[data-older]')?.remove();
    for(const b of result.bookings){
     const line=document.createElement("div");line.className="holding";
     const span=document.createElement("span");span.textContent=b.topic+" · "+b.preferred_date+" "+b.preferred_time+" ("+b.status+")";
@@ -93,11 +100,13 @@
     }
     node.append(line);
    }
-   if(identity.role==="admin")await loadAdmin();
+   olderButton(node,result.next_cursor,loadBookings);
+   if(identity.role==="admin"&&!cursor)await loadAdmin();
   }catch(e){feedback(e.message);}
  }
- async function loadAdmin(){
-   const result=await get("/api/admin/bookings"),node=$("adminBookings");node.replaceChildren();
+ async function loadAdmin(cursor=null){
+   const result=await get('/api/admin/bookings'+(cursor?'?cursor='+encodeURIComponent(cursor):'')),node=$("adminBookings");if(!cursor)node.replaceChildren();
+   node.querySelector('[data-older]')?.remove();
    for(const b of result.bookings){
     const line=document.createElement("div");line.className="holding";const info=document.createElement("span");
     info.textContent=b.email+" · "+b.topic+" · "+b.preferred_date+" "+b.preferred_time+" · "+b.status;
@@ -106,6 +115,7 @@
     selector.addEventListener("change",async()=>{try{await post("/api/admin/bookings/"+b.id,{status:selector.value},"PUT");feedback("Booking status updated.");await loadAdmin();}catch(e){feedback(e.message);}});
     line.append(info,selector);node.append(line);
    }
+   olderButton(node,result.next_cursor,loadAdmin);
  }
  async function checkBilling(){
   try{const s=await get("/api/billing/status");$("billingState").textContent=s.checkout_configured?"Subscription checkout available (test with Stripe configured).":"Subscriptions are not configured."; $("premiumCheckout").disabled=!s.checkout_configured;}

@@ -93,7 +93,7 @@ def transform(text, page):
         result = result.replace('Review inquiries and track follow-up. Stages are operator records, not verified payments, bookings or revenue. Public preview blocks access.',
                                 'Explore two fictional inquiries. Stage changes and deletion affect this tab only. No credentials, real customers, messages or payments are involved.')
         result = result.replace('Workspace locked.', 'Loading fictional sample inquiries…')
-        result = result.replace('Showing the latest 100 requests. Counts cover retained requests. Data expires 30 days after creation. No messages are sent by this workspace.',
+        result = result.replace('Requests load in pages of up to 100. Use Load older requests for more. Counts cover all retained requests. Data expires 30 days after creation. No messages are sent by this workspace.',
                                 'Sample data only. Reload or select Reset samples to restore the examples. Nothing is sent or saved.')
         result = result.replace('id="operatorRefresh">Refresh', 'id="operatorRefresh">Reset samples')
     return result.replace('</head>', additions + '</head>')
@@ -109,7 +109,7 @@ def build(output):
         raise ValueError('The output directory must be empty; choose a new export directory.')
     assets = output / 'static'
     assets.mkdir()
-    for name in ('styles.css', 'site.css', 'launch.css', 'finance.js', 'planner.js',
+    for name in ('styles.css', 'site.css', 'launch.css', 'finance.js', 'money.js', 'planner.js',
                  'launch-model.js', 'launch.js', 'workbook.js'):
         shutil.copyfile(ROOT / 'static' / name, assets / name)
     app = (ROOT / 'static/app.js').read_text()

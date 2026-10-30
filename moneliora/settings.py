@@ -23,8 +23,12 @@ class Settings:
     def pilot_available(self):
         urls = (self.privacy_url, self.terms_url, self.legal_url)
         return bool(self.pilot_enabled and not self.public_preview and self.seller_name
-                    and len(self.admin_token) >= 32 and urlsplit(self.origin).scheme == 'https'
+                    and configured_admin_token(self.admin_token) and urlsplit(self.origin).scheme == 'https'
                     and all(safe_https_url(url) for url in urls))
+
+
+def configured_admin_token(value):
+    return (len(value) >= 32 and not value.lower().startswith(('replace-', 'change-me', 'changeme', '<')))
 
 
 def safe_https_url(value):

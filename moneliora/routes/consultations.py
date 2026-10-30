@@ -1,27 +1,24 @@
 """Educational consultation requests; not bookings or financial advice."""
 from datetime import date, datetime, timedelta, timezone
 import hmac
-import sqlite3
 import threading
 import time
-from fastapi import APIRouter, Header, HTTPException, Request
+from fastapi import APIRouter, Header, HTTPException, Request, Query
 from pydantic import BaseModel, EmailStr, Field, field_validator
+from moneliora.database import connect_database
+from moneliora.pagination import page
+from moneliora.settings import configured_admin_token
 router = APIRouter()
 rate_lock = threading.Lock()
 requests_by_client = {}
 
 def connect(request: Request):
     DB = request.app.state.settings.database
-    DB.parent.mkdir(parents=True, exist_ok=True)
-    db = sqlite3.connect(DB, timeout=10)
-    db.row_factory = sqlite3.Row
-    db.execute("PRAGMA busy_timeout=10000")
-    db.execute("""CREATE TABLE IF NOT EXISTS consultations(
+    return connect_database(DB, """CREATE TABLE IF NOT EXISTS consultations(
         id INTEGER PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL,
         topic TEXT NOT NULL, preferred_date TEXT NOT NULL,
         message TEXT NOT NULL, consent_at TEXT NOT NULL,
         status TEXT NOT NULL DEFAULT 'requested')""")
-    return db
 
 class Consultation(BaseModel):
     name: str = Field(min_length=2, max_length=80)
@@ -75,19 +72,22 @@ def create_consultation(payload: Consultation, request: Request):
 
 def require_admin(request: Request, token: str | None):
     ADMIN_TOKEN = request.app.state.settings.admin_token
-    if not ADMIN_TOKEN or len(ADMIN_TOKEN) < 32:
+    if not configured_admin_token(ADMIN_TOKEN):
         raise HTTPException(503, "Admin API disabled")
-    if not token or not hmac.compare_digest(token, ADMIN_TOKEN):
+    if not token or not hmac.compare_digest(token.encode(), ADMIN_TOKEN.encode()):
         raise HTTPException(401, "Not authorized")
 
 @router.get("/api/admin/consultations")
-def admin_list(request: Request, x_admin_token: str | None = Header(default=None)):
+def admin_list(request: Request, x_admin_token: str | None = Header(default=None),
+               limit:int=Query(100,ge=1,le=100), cursor:int | None=Query(None,ge=1)):
     require_admin(request, x_admin_token)
     with connect(request) as db:
         data = db.execute(
             "SELECT id,name,email,topic,preferred_date,message,consent_at,status "
-            "FROM consultations ORDER BY id DESC LIMIT 100").fetchall()
-    return {"requests": [dict(row) for row in data]}
+            "FROM consultations WHERE (? IS NULL OR id<?) ORDER BY id DESC LIMIT ?",
+            (cursor,cursor,limit+1)).fetchall()
+    data, pagination = page(data, limit)
+    return {'requests':[dict(row) for row in data], **pagination}
 
 @router.delete("/api/admin/consultations/{item_id}")
 def admin_delete(item_id: int, request: Request, x_admin_token: str | None = Header(default=None)):

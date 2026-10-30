@@ -3,7 +3,7 @@ from starlette.responses import JSONResponse
 
 CSP = ("default-src 'none'; script-src 'self'; style-src 'self'; "
        "img-src 'self' data:; font-src 'self'; connect-src 'self'; "
-       "base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
+       "base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'self'")
 SECURITY_HEADERS = {'Content-Security-Policy': CSP, 'X-Content-Type-Options': 'nosniff',
                     'X-Frame-Options': 'DENY', 'Referrer-Policy': 'no-referrer',
                     'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
@@ -41,6 +41,8 @@ class SecurityMiddleware:
         if method in ('POST', 'PUT', 'PATCH', 'DELETE'):
 
             webhook = path in WEBHOOKS
+            if not webhook and headers.get('sec-fetch-site') == 'cross-site':
+                return await reject(403, 'Cross-site request not allowed')
             if not webhook and headers.get('origin', settings.origin).rstrip('/') != settings.origin:
                 return await reject(403, 'Origin not allowed')
             if not webhook and method != 'DELETE' and headers.get('content-type', '').split(';')[0].strip() != 'application/json':
