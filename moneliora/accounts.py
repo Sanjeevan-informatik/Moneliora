@@ -19,6 +19,10 @@ import pyotp
 from argon2 import PasswordHasher, exceptions as argon_exc
 from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Query, Request, Response
 from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
+from moneliora.database import connect_database
+from moneliora import security
+from moneliora.money import migrate_amount, exact_json
+from moneliora.pagination import page
 
 router = APIRouter()
 DB = Path(os.getenv("MONELIORA_DB", str(Path(__file__).resolve().parents[1] / "data" / "moneliora.db")))
@@ -29,8 +33,7 @@ STRIPE_PRICE = os.getenv("MONELIORA_STRIPE_PRICE_ID", "")
 STRIPE_WEBHOOK = os.getenv("MONELIORA_STRIPE_WEBHOOK_SECRET", "")
 PUBLIC_URL = os.getenv("MONELIORA_PUBLIC_URL", "http://127.0.0.1:8000").rstrip("/")
 PASSWORD = PasswordHasher(time_cost=3, memory_cost=65536, parallelism=2)
-AUTH_LOCK = Lock()
-AUTH_ATTEMPTS: dict[str, list[float]] = {}
+DUMMY_PASSWORD_HASH = PASSWORD.hash(secrets.token_urlsafe(32))
 SESSION_SECONDS = 12 * 3600
 SYMBOLS = frozenset(["NVDA", "MSFT", "AAPL", "TSLA", "XIA", "BYD", "IFX", "VW", "AIR"])
 US_SYMBOLS = frozenset(["NVDA", "MSFT", "AAPL", "TSLA"])
@@ -38,12 +41,7 @@ MARKET_CACHE: dict[str, tuple[float, dict]] = {}
 MARKET_LOCK = Lock()
 
 def db_conn():
-    DB.parent.mkdir(parents=True, exist_ok=True)
-    db = sqlite3.connect(DB, timeout=10)
-    db.row_factory = sqlite3.Row
-    db.execute("PRAGMA busy_timeout=10000")
-    db.execute("PRAGMA foreign_keys=ON")
-    db.executescript("""
+    return connect_database(DB, security.SCHEMA + """
         CREATE TABLE IF NOT EXISTS users(
            id INTEGER PRIMARY KEY, email TEXT NOT NULL UNIQUE,
            password_hash TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'user',
@@ -82,8 +80,8 @@ def db_conn():
         CREATE TABLE IF NOT EXISTS stripe_events(
            event_id TEXT PRIMARY KEY, processed_at TEXT NOT NULL
         );
+        CREATE INDEX IF NOT EXISTS booking_user_page ON booking_requests(user_id,id DESC);
     """)
-    return db
 
 def recompute_membership(db, user_id: int) -> None:
     paypal = db.execute("SELECT tier FROM paypal_subscriptions WHERE user_id=? AND status='ACTIVE'", (user_id,)).fetchone()
@@ -96,23 +94,8 @@ def utc_now():
 def now_iso():
     return utc_now().isoformat()
 
-def login_limiter(key: str):
-    current = time.monotonic()
-    with AUTH_LOCK:
-        # prune keys to avoid indefinite storage growth
-        if len(AUTH_ATTEMPTS) > 10000:
-            for k in list(AUTH_ATTEMPTS):
-                AUTH_ATTEMPTS[k] = [t for t in AUTH_ATTEMPTS[k] if current-t < 900]
-                if not AUTH_ATTEMPTS[k]:
-                    del AUTH_ATTEMPTS[k]
-        hits = [t for t in AUTH_ATTEMPTS.get(key, []) if current-t < 900]
-        if len(hits) >= 8:
-            raise HTTPException(429, "Too many attempts. Try again later.")
-        hits.append(current)
-        AUTH_ATTEMPTS[key] = hits
-
 def session_auth(moneliora_session: Annotated[str | None, Cookie()] = None):
-    if not moneliora_session:
+    if not moneliora_session or len(moneliora_session) != 64:
         raise HTTPException(401, "Please sign in.")
     hashed = sha256(moneliora_session.encode()).hexdigest()
     with db_conn() as db:
@@ -129,7 +112,7 @@ def csrf_guard(
     user: Annotated[dict, Depends(session_auth)],
     x_csrf_token: Annotated[str | None, Header()] = None,
 ):
-    if not x_csrf_token or not hmac.compare_digest(x_csrf_token, user["csrf"]):
+    if not x_csrf_token or not hmac.compare_digest(x_csrf_token.encode(), user['csrf'].encode()):
         raise HTTPException(403, "Security token missing or invalid.")
     return user
 
@@ -153,10 +136,14 @@ class MFAConfirm(BaseModel):
     code: str = Field(pattern=r"^\d{6}$")
 
 class MFADisable(BaseModel):
-    password: str
+    password: str = Field(min_length=12, max_length=128)
     code: str = Field(pattern=r"^\d{6}$")
 
-def issue_session(db, user_id: int, response: Response):
+def secure_cookie(request):
+    return COOKIE_SECURE or request.url.scheme == 'https' or PUBLIC_URL.startswith('https://')
+
+
+def issue_session(db, user_id: int, response: Response, request: Request):
     raw = secrets.token_urlsafe(48)
     csrf = secrets.token_urlsafe(32)
     until = (utc_now()+timedelta(seconds=SESSION_SECONDS)).isoformat()
@@ -164,19 +151,21 @@ def issue_session(db, user_id: int, response: Response):
     db.execute("INSERT INTO sessions(token_hash,user_id,csrf,expires_at) VALUES(?,?,?,?)",
                (sha256(raw.encode()).hexdigest(), user_id, csrf, until))
     response.set_cookie("moneliora_session", raw, max_age=SESSION_SECONDS, httponly=True,
-                        secure=COOKIE_SECURE, samesite="strict", path="/")
+                        secure=secure_cookie(request), samesite="strict", path="/")
     return csrf
 
 @router.post("/api/auth/register", status_code=201)
 def register(payload: AuthInput, response: Response, request: Request):
-    login_limiter("register:"+str(request.client.host if request.client else "unknown"))
     email = str(payload.email).lower()
+    client = request.client.host if request.client else 'unknown'
+    security.throttle(DB, 'register', client, email)
     hashed = PASSWORD.hash(payload.password)
     try:
         with db_conn() as db:
             cursor = db.execute("INSERT INTO users(email,password_hash,created_at) VALUES(?,?,?)",
                                 (email, hashed, now_iso()))
-            csrf = issue_session(db, cursor.lastrowid, response)
+            csrf = issue_session(db, cursor.lastrowid, response, request)
+            security.record(db, 'REGISTERED', user_id=cursor.lastrowid, client=client)
             db.commit()
     except sqlite3.IntegrityError:
         raise HTTPException(409, "An account with this email already exists.")
@@ -184,31 +173,45 @@ def register(payload: AuthInput, response: Response, request: Request):
 
 @router.post("/api/auth/login")
 def login(payload: AuthInput, response: Response, request: Request):
-    login_limiter("login:"+str(request.client.host if request.client else "unknown")+":"+str(payload.email).lower())
+    email = str(payload.email).lower()
+    client = request.client.host if request.client else 'unknown'
+    security.throttle(DB, 'login', client, email)
+    # Never hold a writer lock while running the expensive password verifier.
     with db_conn() as db:
-        row = db.execute("SELECT * FROM users WHERE email=?", (str(payload.email).lower(),)).fetchone()
-        if row and row["locked_until"] and row["locked_until"] > now_iso():
-            raise HTTPException(429, "Account temporarily locked. Try again later.")
+        original = db.execute('SELECT * FROM users WHERE email=?', (email,)).fetchone()
+    try:
+        ok = PASSWORD.verify(original['password_hash'] if original else DUMMY_PASSWORD_HASH, payload.password)
+    except (argon_exc.VerifyMismatchError, argon_exc.VerificationError, argon_exc.InvalidHashError):
         ok = False
-        if row:
-            try:
-                ok = PASSWORD.verify(row["password_hash"], payload.password)
-            except (argon_exc.VerifyMismatchError, argon_exc.VerificationError, argon_exc.InvalidHashError):
-                ok = False
-        if not ok or (row and row["mfa_secret"] and
-                       not (payload.otp and pyotp.TOTP(row["mfa_secret"]).verify(payload.otp, valid_window=1))):
+    if original and original['mfa_secret']:
+        ok = ok and bool(payload.otp and pyotp.TOTP(original['mfa_secret']).verify(payload.otp, valid_window=1))
+    error = None
+    with db_conn() as db:
+        db.execute('BEGIN IMMEDIATE')
+        row = db.execute('SELECT * FROM users WHERE email=?', (email,)).fetchone()
+        unchanged = bool(original and row and original['password_hash'] == row['password_hash']
+                         and original['mfa_secret'] == row['mfa_secret'])
+        if row and row['locked_until'] and row['locked_until'] > now_iso():
+            security.record(db, 'LOGIN_LOCKED', user_id=row['id'], email=email, client=client)
+            error = HTTPException(429, 'Account temporarily locked. Try again later.',
+                                  headers={'Retry-After': '900'})
+        elif not ok or not unchanged:
+            security.record(db, 'LOGIN_FAILED', user_id=row['id'] if row else None, email=email, client=client)
             if row:
                 attempts = row["failed_attempts"]+1
                 lock_until = (utc_now()+timedelta(minutes=15)).isoformat() if attempts>=8 else None
                 db.execute("UPDATE users SET failed_attempts=?,locked_until=? WHERE id=?",
                            (attempts if attempts<8 else 0, lock_until, row["id"]))
-                db.commit()
-            raise HTTPException(401, "Incorrect credentials or authentication code.")
-        db.execute("UPDATE users SET failed_attempts=0,locked_until=NULL WHERE id=?", (row["id"],))
-        csrf = issue_session(db, row["id"], response)
-        db.commit()
-        return {"email":row["email"],"role":row["role"],"csrf":csrf,
-                "mfa_enabled":bool(row["mfa_secret"]),"plan":row["plan"]}
+            error = HTTPException(401, 'Incorrect credentials or authentication code.')
+        else:
+            db.execute('UPDATE users SET failed_attempts=0,locked_until=NULL WHERE id=?', (row['id'],))
+            csrf = issue_session(db, row['id'], response, request)
+            security.record(db, 'LOGIN_SUCCEEDED', user_id=row['id'], client=client)
+    # Rejections are raised after commit; audit events and lock counters survive.
+    if error:
+        raise error
+    return {'email':row['email'], 'role':row['role'], 'csrf':csrf,
+            'mfa_enabled':bool(row['mfa_secret']), 'plan':row['plan']}
 
 @router.get("/api/auth/me")
 def me(user: Annotated[dict, Depends(session_auth)]):
@@ -216,13 +219,14 @@ def me(user: Annotated[dict, Depends(session_auth)]):
             "mfa_enabled":bool(user["mfa_secret"]),"plan":user["plan"]}
 
 @router.post("/api/auth/logout")
-def logout(response: Response, user: Annotated[dict, Depends(csrf_guard)],
+def logout(response: Response, request: Request, user: Annotated[dict, Depends(csrf_guard)],
            moneliora_session: Annotated[str | None, Cookie()] = None):
     with db_conn() as db:
         db.execute("DELETE FROM sessions WHERE token_hash=?", (sha256((moneliora_session or "").encode()).hexdigest(),))
+        security.record(db, 'LOGOUT', user_id=user['id'])
         db.commit()
     response.delete_cookie("moneliora_session", path="/", httponly=True,
-                           secure=COOKIE_SECURE, samesite="strict")
+                           secure=secure_cookie(request), samesite="strict")
     return {"signed_out":True}
 
 @router.post("/api/auth/mfa/setup")
@@ -237,42 +241,73 @@ def mfa_setup(user: Annotated[dict, Depends(csrf_guard)]):
     return {"secret":secret,"otpauth_uri":url,"note":"Keep this secret private; confirm the code to enable MFA."}
 
 @router.post("/api/auth/mfa/confirm")
-def mfa_confirm(payload: MFAConfirm, user: Annotated[dict, Depends(csrf_guard)]):
+def mfa_confirm(payload: MFAConfirm, response: Response, request: Request, user: Annotated[dict, Depends(csrf_guard)]):
+    security.throttle(DB, 'mfa-confirm', request.client.host if request.client else 'unknown', user['email'])
+    error = None
     with db_conn() as db:
+        db.execute('BEGIN IMMEDIATE')
         row = db.execute("SELECT mfa_pending FROM users WHERE id=?", (user["id"],)).fetchone()
         if not row or not row["mfa_pending"] or not pyotp.TOTP(row["mfa_pending"]).verify(payload.code,valid_window=1):
-            raise HTTPException(400, "Invalid or expired authentication code.")
-        db.execute("UPDATE users SET mfa_secret=mfa_pending,mfa_pending=NULL WHERE id=?", (user["id"],))
-        db.commit()
-    return {"mfa_enabled":True}
+            security.record(db, 'MFA_FAILED', user_id=user['id'])
+            error = HTTPException(400, 'Invalid or expired authentication code.')
+        else:
+            db.execute('UPDATE users SET mfa_secret=mfa_pending,mfa_pending=NULL WHERE id=?', (user['id'],))
+            csrf = issue_session(db, user['id'], response, request)
+            security.record(db, 'MFA_ENABLED', user_id=user['id'])
+    if error:
+        raise error
+    return {'mfa_enabled':True, 'csrf':csrf}
 
 @router.post("/api/auth/mfa/disable")
-def mfa_disable(payload: MFADisable, user: Annotated[dict, Depends(csrf_guard)]):
+def mfa_disable(payload: MFADisable, response: Response, request: Request, user: Annotated[dict, Depends(csrf_guard)]):
+    security.throttle(DB, 'mfa-disable', request.client.host if request.client else 'unknown', user['email'])
     with db_conn() as db:
         row = db.execute("SELECT password_hash,mfa_secret FROM users WHERE id=?", (user["id"],)).fetchone()
-        try:
-            correct = PASSWORD.verify(row["password_hash"],payload.password)
-        except (argon_exc.VerifyMismatchError, argon_exc.VerificationError, argon_exc.InvalidHashError):
-            correct = False
-        if not correct or not row["mfa_secret"] or not pyotp.TOTP(row["mfa_secret"]).verify(payload.code,valid_window=1):
-            raise HTTPException(401, "Password or authentication code incorrect.")
-        db.execute("UPDATE users SET mfa_secret=NULL,mfa_pending=NULL WHERE id=?", (user["id"],))
-        db.commit()
-    return {"mfa_enabled":False}
+    try:
+        correct = bool(row and PASSWORD.verify(row['password_hash'], payload.password))
+    except (argon_exc.VerifyMismatchError, argon_exc.VerificationError, argon_exc.InvalidHashError):
+        correct = False
+    correct = correct and bool(row['mfa_secret'] and pyotp.TOTP(row['mfa_secret']).verify(payload.code,valid_window=1))
+    error = None
+    with db_conn() as db:
+        db.execute('BEGIN IMMEDIATE')
+        current = db.execute('SELECT password_hash,mfa_secret FROM users WHERE id=?', (user['id'],)).fetchone()
+        if not correct or not current or dict(current) != dict(row):
+            security.record(db, 'MFA_FAILED', user_id=user['id'])
+            error = HTTPException(401, 'Password or authentication code incorrect.')
+        else:
+            db.execute('UPDATE users SET mfa_secret=NULL,mfa_pending=NULL WHERE id=?', (user['id'],))
+            csrf = issue_session(db, user['id'], response, request)
+            security.record(db, 'MFA_DISABLED', user_id=user['id'])
+    if error:
+        raise error
+    return {'mfa_enabled':False, 'csrf':csrf}
 
 class TradeState(BaseModel):
+    model_config = {'extra': 'forbid'}
     symbol: str
-    qty: int = Field(ge=1,le=100000)
-    amount: float = Field(ge=0,le=5000000)
+    qty: int = Field(strict=True,ge=1,le=100000)
+    amount_cents: int = Field(strict=True,ge=0,le=500000000)
     side: Literal["buy","sell"]
     date: str = Field(max_length=100)
 
+    @model_validator(mode='before')
+    @classmethod
+    def legacy_amount(cls, data):
+        return migrate_amount(data, 'amount', 'amount_cents') if isinstance(data, dict) else data
+
 class AccountState(BaseModel):
     model_config = {"extra": "forbid"}
-    cash: float = Field(ge=0,le=5000)
-    positions: dict[str,int] = Field(default_factory=dict, max_length=9)
+    schema_version: Literal[2] = 2
+    cash_cents: int = Field(strict=True,ge=0,le=500000)
+    positions: dict[str,Annotated[int, Field(strict=True)]] = Field(default_factory=dict, max_length=9)
     watched: list[str] = Field(default_factory=list,max_length=9)
     trades: list[TradeState] = Field(default_factory=list,max_length=30)
+
+    @model_validator(mode='before')
+    @classmethod
+    def legacy_cash(cls, data):
+        return migrate_amount(data, 'cash', 'cash_cents') if isinstance(data, dict) else data
 
     @model_validator(mode="after")
     def valid_symbols(self):
@@ -289,10 +324,31 @@ class AccountState(BaseModel):
 def get_state(user: Annotated[dict, Depends(session_auth)]):
     with db_conn() as db:
         row=db.execute("SELECT data,updated_at FROM account_states WHERE user_id=?", (user["id"],)).fetchone()
-    return {"state":json.loads(row["data"]) if row else None,"updated_at":row["updated_at"] if row else None}
+    state = None
+    if row:
+        try:
+            state = AccountState.model_validate(exact_json(row['data']))
+        except ValueError:
+            raise HTTPException(409, 'Saved demo snapshot is invalid. Save a valid replacement.') from None
+        canonical = state.model_dump_json()
+        if canonical != row['data']:
+            # Compare-and-set avoids overwriting a newer save during migration.
+            with db_conn() as db:
+                db.execute('UPDATE account_states SET data=? WHERE user_id=? AND data=?',
+                           (canonical, user['id'], row['data']))
+    return {'state':state.model_dump() if state else None, 'updated_at':row['updated_at'] if row else None}
+
+async def exact_snapshot(request: Request, payload: AccountState):
+    # Reparse decimal JSON lexemes before any binary-float conversion can hide
+    # fractional cents. The typed body above keeps the documented API schema.
+    try:
+        return AccountState.model_validate(exact_json(await request.body()))
+    except ValueError:
+        raise HTTPException(422, 'Snapshot amounts must be finite integer cents or exact legacy EUR values.') from None
+
 
 @router.put("/api/account/state")
-def put_state(payload: AccountState,user: Annotated[dict, Depends(csrf_guard)]):
+def put_state(payload: Annotated[AccountState, Depends(exact_snapshot)],user: Annotated[dict, Depends(csrf_guard)]):
     with db_conn() as db:
         db.execute("""INSERT INTO account_states(user_id,data,updated_at) VALUES(?,?,?)
             ON CONFLICT(user_id) DO UPDATE SET data=excluded.data,updated_at=excluded.updated_at""",
@@ -324,6 +380,7 @@ class BookingInput(BaseModel):
 @router.post("/api/bookings",status_code=201)
 def request_booking(payload: BookingInput,user: Annotated[dict,Depends(csrf_guard)]):
     with db_conn() as db:
+        db.execute('BEGIN IMMEDIATE')
         count=db.execute("SELECT COUNT(*) FROM booking_requests WHERE user_id=? AND status='pending'",(user["id"],)).fetchone()[0]
         if count>=3:
             raise HTTPException(429,"Only 3 pending requests are allowed.")
@@ -334,11 +391,14 @@ def request_booking(payload: BookingInput,user: Annotated[dict,Depends(csrf_guar
     return {"id":cur.lastrowid,"status":"pending","note":"A request, not a confirmed appointment. Times in Europe/Berlin."}
 
 @router.get("/api/bookings")
-def list_bookings(user: Annotated[dict,Depends(session_auth)]):
+def list_bookings(user: Annotated[dict,Depends(session_auth)], limit:int=Query(30,ge=1,le=100),
+                  cursor:int | None=Query(None,ge=1)):
     with db_conn() as db:
         rows=db.execute("""SELECT id,topic,preferred_date,preferred_time,question,status,created_at
-                         FROM booking_requests WHERE user_id=? ORDER BY id DESC LIMIT 30""",(user["id"],)).fetchall()
-    return {"timezone":"Europe/Berlin","bookings":[dict(r) for r in rows]}
+                         FROM booking_requests WHERE user_id=? AND (? IS NULL OR id<?)
+                         ORDER BY id DESC LIMIT ?""",(user['id'],cursor,cursor,limit+1)).fetchall()
+    rows, pagination = page(rows, limit)
+    return {'timezone':'Europe/Berlin','bookings':[dict(r) for r in rows], **pagination}
 
 @router.delete("/api/bookings/{booking_id}")
 def cancel_booking(booking_id:int,user: Annotated[dict,Depends(csrf_guard)]):
@@ -351,12 +411,25 @@ def cancel_booking(booking_id:int,user: Annotated[dict,Depends(csrf_guard)]):
     return {"status":"cancelled"}
 
 @router.get("/api/admin/bookings")
-def admin_bookings(user: Annotated[dict,Depends(admin_user)]):
+def admin_bookings(user: Annotated[dict,Depends(admin_user)], limit:int=Query(100,ge=1,le=100),
+                   cursor:int | None=Query(None,ge=1)):
     with db_conn() as db:
         rows=db.execute("""SELECT b.id,u.email,b.topic,b.preferred_date,b.preferred_time,
                          b.question,b.status FROM booking_requests b JOIN users u ON b.user_id=u.id
-                         ORDER BY b.id DESC LIMIT 100""").fetchall()
-    return {"timezone":"Europe/Berlin","bookings":[dict(r) for r in rows]}
+                         WHERE (? IS NULL OR b.id<?) ORDER BY b.id DESC LIMIT ?""",
+                         (cursor,cursor,limit+1)).fetchall()
+    rows, pagination = page(rows, limit)
+    return {'timezone':'Europe/Berlin','bookings':[dict(r) for r in rows], **pagination}
+
+@router.get('/api/admin/audit')
+def audit_events(user: Annotated[dict, Depends(admin_user)], limit:int=Query(100,ge=1,le=100),
+                 cursor:int | None=Query(None,ge=1)):
+    with db_conn() as db:
+        security.cleanup(db)
+        rows = db.execute('SELECT * FROM security_events WHERE (? IS NULL OR id<?) ORDER BY id DESC LIMIT ?',
+                          (cursor,cursor,limit+1)).fetchall()
+    rows, pagination = page(rows, limit)
+    return {'events':[dict(row) for row in rows], **pagination, 'retention_days':30}
 
 class BookingStatus(BaseModel):
     status: Literal["pending","confirmed","cancelled"]
@@ -457,6 +530,7 @@ async def billing_webhook(request:Request,stripe_signature:Annotated[str | None,
     event_type=event["type"]
     obj=event["data"]["object"]
     with db_conn() as db:
+        db.execute('BEGIN IMMEDIATE')
         if db.execute("SELECT 1 FROM stripe_events WHERE event_id=?",(event["id"],)).fetchone():
             return {"received":True}
         if event_type=="checkout.session.completed" and obj.get("mode")=="subscription" and obj.get("payment_status")=="paid":

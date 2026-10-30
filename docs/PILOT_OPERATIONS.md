@@ -29,7 +29,7 @@ Open `/operator` on a trusted device and enter the configured token to review co
 
 For direct API access, use the `X-Admin-Token` header, never a query parameter or browser localStorage. Keep commands containing real secrets out of shared terminals and logs.
 
-- `GET /api/admin/pilot`: latest 100 requests, aggregate stage counts and retention period.
+- `GET /api/admin/pilot`: a page of up to 100 requests, aggregate stage counts and retention period. Use `limit` and the returned `next_cursor` to retrieve older requests; the operator UI provides a Load older requests button.
 - `PATCH /api/admin/pilot/{id}` with JSON `{"stage":"contacted"}`: update stage.
 - Valid stages: `new`, `contacted`, `qualified`, `completed`, `declined`.
 - `DELETE /api/admin/pilot/{id}`: remove a request.

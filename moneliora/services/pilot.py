@@ -1,22 +1,20 @@
 """Pilot request persistence, retention and operator workflow. No payment handling."""
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
-import sqlite3
 import uuid
+from moneliora.database import connect_database
+from moneliora.pagination import decode_pilot_cursor, pilot_cursor
 
 STAGES = ('new', 'contacted', 'qualified', 'completed', 'declined')
 
 @contextmanager
 def connect(path):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    db = sqlite3.connect(path, timeout=10)
-    db.row_factory = sqlite3.Row
-    db.execute('PRAGMA busy_timeout=10000')
-    db.execute('''CREATE TABLE IF NOT EXISTS pilot_requests (
+    db = connect_database(path, '''CREATE TABLE IF NOT EXISTS pilot_requests (
         id TEXT PRIMARY KEY, email TEXT NOT NULL, name TEXT NOT NULL,
         offer TEXT NOT NULL, objective TEXT NOT NULL, stage TEXT NOT NULL DEFAULT 'new',
-        created_at TEXT NOT NULL, updated_at TEXT NOT NULL, consent_version TEXT NOT NULL)''')
-    db.execute('CREATE INDEX IF NOT EXISTS pilot_email_offer ON pilot_requests(email, offer)')
+        created_at TEXT NOT NULL, updated_at TEXT NOT NULL, consent_version TEXT NOT NULL);
+        CREATE INDEX IF NOT EXISTS pilot_email_offer ON pilot_requests(email, offer);
+        CREATE INDEX IF NOT EXISTS pilot_page ON pilot_requests(created_at DESC,id DESC);''')
     try:
         yield db
         db.commit()
@@ -50,14 +48,20 @@ def create(path, data):
                       data.offer, data.objective, instant.isoformat(), instant.isoformat(), 'pilot-v1'))
 
 
-def listing(path):
+def listing(path, limit=100, cursor=None):
+    position = decode_pilot_cursor(cursor) if cursor else None
     with connect(path) as db:
         prune(db, now())
-        rows = db.execute('SELECT * FROM pilot_requests ORDER BY created_at DESC LIMIT 100').fetchall()
+        where = 'WHERE (created_at,id)<(?,?)' if position else ''
+        rows = db.execute('SELECT * FROM pilot_requests '+where+' ORDER BY created_at DESC,id DESC LIMIT ?',
+                          (*position,limit+1) if position else (limit+1,)).fetchall()
+        more = len(rows)>limit
+        rows = rows[:limit]
         counts = {stage: 0 for stage in STAGES}
         for row in db.execute('SELECT stage, COUNT(*) AS count FROM pilot_requests GROUP BY stage'):
             counts[row['stage']] = row['count']
-        return {'requests': [dict(row) for row in rows], 'counts': counts, 'retention_days': 30}
+        return {'requests': [dict(row) for row in rows], 'counts': counts, 'retention_days': 30,
+                'has_more':more, 'next_cursor':pilot_cursor(rows[-1]) if more else None, 'limit':limit}
 
 
 def transition(path, request_id, stage):
